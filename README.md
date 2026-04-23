@@ -23,3 +23,4 @@
 
 - Mobile app: React Native with Expo.
 - Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
+- Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
