@@ -141,7 +141,9 @@ function startMetroIfNeeded() {
 
 function runAndroidInstall() {
   const command =
-    process.platform === 'win32' ? 'node .\\scripts\\android-run.js' : 'node ./scripts/android-run.js';
+    process.platform === 'win32'
+      ? 'node .\\scripts\\android-run.js --no-bundler'
+      : 'node ./scripts/android-run.js --no-bundler';
   const child = spawn(command, {
     stdio: 'inherit',
     shell: true,

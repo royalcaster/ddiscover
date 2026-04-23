@@ -6,7 +6,9 @@ const { ensureAndroidSdkConfig } = require('./android-sdk');
 function run() {
   const projectRoot = path.resolve(__dirname, '..');
   const { sdkRoot, androidUserHome, avdHome } = ensureAndroidSdkConfig(projectRoot);
-  const command = process.platform === 'win32' ? 'npx.cmd expo run:android' : 'npx expo run:android';
+  const extraArgs = process.argv.slice(2).join(' ');
+  const baseCommand = process.platform === 'win32' ? 'npx.cmd expo run:android' : 'npx expo run:android';
+  const command = extraArgs ? `${baseCommand} ${extraArgs}` : baseCommand;
 
   const child = spawn(command, {
     cwd: projectRoot,
