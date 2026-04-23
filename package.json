@@ -7,7 +7,7 @@
     "dev": "node ./scripts/dev-server.js start",
     "dev:stop": "node ./scripts/dev-server.js stop",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
+    "android": "node ./scripts/android-run.js",
     "android:dev": "node ./scripts/android-dev.js",
     "android:dev:medium": "node ./scripts/android-dev.js Medium_Phone_API_35",
     "emu:list": "node ./scripts/android-emulator.js list",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@clerk/expo": "^3.2.2",
-    "@react-native-async-storage/async-storage": "^3.0.2",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",

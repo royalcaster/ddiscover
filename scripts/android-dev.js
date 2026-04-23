@@ -1,16 +1,12 @@
 const { execFileSync, execSync, spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+const { ensureAndroidSdkConfig } = require('./android-sdk');
 
-const sdkRoot =
-  process.env.ANDROID_SDK_ROOT ||
-  process.env.ANDROID_HOME ||
-  path.join(process.env.LOCALAPPDATA || '', 'Android', 'Sdk');
+const projectRoot = path.resolve(__dirname, '..');
+const { sdkRoot, androidUserHome, avdHome } = ensureAndroidSdkConfig(projectRoot);
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
 const adbPath = path.join(sdkRoot, 'platform-tools', 'adb.exe');
-const avdHome =
-  process.env.ANDROID_AVD_HOME || path.join(process.env.USERPROFILE || '', '.android', 'avd');
-const androidUserHome = path.join(process.env.USERPROFILE || '', '.android');
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -145,7 +141,7 @@ function startMetroIfNeeded() {
 
 function runAndroidInstall() {
   const command =
-    process.platform === 'win32' ? 'npm.cmd run android' : 'npm run android';
+    process.platform === 'win32' ? 'node .\\scripts\\android-run.js' : 'node ./scripts/android-run.js';
   const child = spawn(command, {
     stdio: 'inherit',
     shell: true,
@@ -156,6 +152,7 @@ function runAndroidInstall() {
       ANDROID_USER_HOME: androidUserHome,
       ANDROID_AVD_HOME: avdHome,
     },
+    cwd: projectRoot,
   });
 
   child.on('exit', (code) => {
