@@ -3,6 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/providers/theme-provider';
 
 const options = [
@@ -28,16 +29,18 @@ export function ThemeModeToggle() {
             className="min-w-[72px] border-transparent"
             onPress={() => {
               void setPreference(option.value);
-            }}
-            leadingIcon={
+            }}>
+            <View className="flex-row items-center gap-2">
               <Icon
                 size={15}
-                color={isActive ? colors.accentForeground : colors.textSecondary}
+                color={isActive ? colors.primaryForeground : colors.mutedForeground}
                 strokeWidth={2}
               />
-            }
-            label={option.label}
-          />
+              <Text className={isActive ? 'text-primary-foreground' : 'text-muted-foreground'}>
+                {option.label}
+              </Text>
+            </View>
+          </Button>
         );
       })}
     </View>

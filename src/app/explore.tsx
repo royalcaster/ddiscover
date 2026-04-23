@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -41,8 +41,12 @@ export default function ClubsScreen() {
         contentContainerClassName="mx-auto w-full max-w-[860px] gap-6 px-4 pb-28 pt-4">
         <View className="gap-4">
           <View className="max-w-[620px] gap-3">
-            <Badge variant="default" label="Clubs" />
-            <Text variant="hero">Canonical club profiles with event context</Text>
+            <Badge variant="default">
+              <Text>Clubs</Text>
+            </Badge>
+            <Text variant="h1" className="text-left">
+              Canonical club profiles with event context
+            </Text>
             <Text variant="muted">
               This is the first normalized discovery layer on top of the VDSC import. Each club card
               is backed by the canonical Convex model rather than raw feed strings.
@@ -52,14 +56,18 @@ export default function ClubsScreen() {
           <View className="flex-row flex-wrap gap-3">
             <Card className="min-w-[170px] flex-1">
               <CardHeader className="gap-1 pb-2">
-                <Text variant="caption">Clubs loaded</Text>
-                <Text variant="title">{clubs?.length ?? '...'}</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
+                  Clubs loaded
+                </Text>
+                <Text className="text-4xl font-semibold">{clubs?.length ?? '...'}</Text>
               </CardHeader>
             </Card>
             <Card className="min-w-[170px] flex-1">
               <CardHeader className="gap-1 pb-2">
-                <Text variant="caption">With next event</Text>
-                <Text variant="title">{clubsWithUpcomingEvent}</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
+                  With next event
+                </Text>
+                <Text className="text-4xl font-semibold">{clubsWithUpcomingEvent}</Text>
               </CardHeader>
             </Card>
           </View>
@@ -68,7 +76,7 @@ export default function ClubsScreen() {
         {clubs === undefined ? (
           <Card>
             <CardContent className="pt-4">
-              <Text variant="section">Loading clubs</Text>
+              <Text variant="h4">Loading clubs</Text>
               <Text variant="muted">Waiting for Convex to return the normalized club list.</Text>
             </CardContent>
           </Card>
@@ -82,14 +90,18 @@ export default function ClubsScreen() {
                   <View className="flex-row items-start justify-between gap-3">
                     <View className="flex-1 gap-3">
                       <View className="flex-row flex-wrap items-center gap-2">
-                        <Badge variant="default" label={club.source?.toUpperCase() ?? 'MANUAL'} />
-                        <Badge variant="outline" label={club.slug} />
+                        <Badge variant="default">
+                          <Text>{club.source?.toUpperCase() ?? 'MANUAL'}</Text>
+                        </Badge>
+                        <Badge variant="outline">
+                          <Text>{club.slug}</Text>
+                        </Badge>
                       </View>
-                      <Text variant="section">{club.name}</Text>
+                      <CardTitle className="text-2xl">{club.name}</CardTitle>
                     </View>
 
                     <View className="rounded-lg border border-border bg-secondary px-3 py-2">
-                      <Text variant="mono">
+                      <Text className="font-mono text-xs font-semibold uppercase tracking-[0.12em]">
                         {club.nextEvent ? formatStartsAt(club.nextEvent.startsAt) : 'NO NEXT EVENT'}
                       </Text>
                     </View>
@@ -99,7 +111,7 @@ export default function ClubsScreen() {
                 <CardContent>
                   <View className="gap-3">
                     <View className="flex-row items-start gap-2">
-                      <Building2 size={16} color={theme.textSecondary} style={{ marginTop: 2 }} />
+                      <Building2 size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
                       <Text variant="muted">
                         {club.websiteUrl ? 'Club profile normalized from source metadata.' : 'Canonical club profile with normalized venue metadata.'}
                       </Text>
@@ -107,7 +119,7 @@ export default function ClubsScreen() {
 
                     {address ? (
                       <View className="flex-row items-start gap-2">
-                        <MapPinHouse size={16} color={theme.textSecondary} style={{ marginTop: 2 }} />
+                        <MapPinHouse size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
                         <Text variant="muted">{address}</Text>
                       </View>
                     ) : null}
@@ -115,13 +127,15 @@ export default function ClubsScreen() {
                     {club.nextEvent ? (
                       <View className="gap-2 rounded-lg border border-border bg-secondary p-3">
                         <View className="flex-row items-center gap-2">
-                          <CalendarClock size={16} color={theme.textSecondary} />
-                          <Text variant="caption">Next event</Text>
+                          <CalendarClock size={16} color={theme.mutedForeground} />
+                          <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
+                            Next event
+                          </Text>
                         </View>
-                        <Text variant="label">{club.nextEvent.title}</Text>
+                        <Text variant="large">{club.nextEvent.title}</Text>
                         <View className="flex-row flex-wrap gap-4">
                           <View className="min-w-[180px] flex-1 flex-row items-center gap-2">
-                            <MapPinned size={16} color={theme.textSecondary} />
+                            <MapPinned size={16} color={theme.mutedForeground} />
                             <Text variant="muted">
                               {club.nextEvent.locationName ?? club.name}
                             </Text>
@@ -144,10 +158,10 @@ export default function ClubsScreen() {
                       size="sm"
                       onPress={() => {
                         void Linking.openURL(club.websiteUrl!);
-                      }}
-                      leadingIcon={<Globe2 size={16} color={theme.text} />}
-                      label="Website"
-                    />
+                      }}>
+                      <Globe2 size={16} color={theme.foreground} />
+                      <Text>Website</Text>
+                    </Button>
                   ) : null}
                   {club.nextEvent?.sourceUrl ? (
                     <Button
@@ -155,10 +169,10 @@ export default function ClubsScreen() {
                       size="sm"
                       onPress={() => {
                         void Linking.openURL(club.nextEvent!.sourceUrl!);
-                      }}
-                      leadingIcon={<CalendarClock size={16} color={theme.text} />}
-                      label="Event source"
-                    />
+                      }}>
+                      <CalendarClock size={16} color={theme.foreground} />
+                      <Text>Event source</Text>
+                    </Button>
                   ) : null}
                 </CardFooter>
               </Card>

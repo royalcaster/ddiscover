@@ -25,7 +25,7 @@
 - Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
 - Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 - Event ingestion: Convex action imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json` and upserts events by source key.
-- UI styling: NativeWind-backed semantic light/dark tokens with reusable local UI primitives aligned to the design reference in `docs/design/`.
+- UI styling: React Native Reusables-compatible NativeWind setup with `components.json`, semantic light/dark tokens, and registry-backed UI primitives aligned to the design reference in `docs/design/`.
 
 ### Local Development
 

@@ -1,17 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DefaultTheme, ThemeProvider as NavigationThemeProvider, type Theme } from '@react-navigation/native';
 import * as SystemUI from 'expo-system-ui';
-import { vars, useColorScheme as useNativeWindColorScheme } from 'nativewind';
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import React, { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-import { View, useColorScheme as useSystemColorScheme } from 'react-native';
+import { useColorScheme as useSystemColorScheme } from 'react-native';
 
-import { Colors, ThemeModePreference, type ResolvedTheme, buildNavigationTheme, buildThemeVariables } from '@/constants/theme';
+import { type ThemeModePreference } from '@/constants/theme';
+import { NAV_THEME, THEME, type ThemeMode } from '@/lib/theme';
 
 type ThemeContextValue = {
-  colors: (typeof Colors)[ResolvedTheme];
-  navigationTheme: Theme;
+  colors: (typeof THEME)[ThemeMode];
+  navigationTheme: (typeof NAV_THEME)[ThemeMode];
   preference: ThemeModePreference;
-  resolvedTheme: ResolvedTheme;
+  resolvedTheme: ThemeMode;
   setPreference: (preference: ThemeModePreference) => Promise<void>;
   isReady: boolean;
 };
@@ -23,7 +23,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 function resolveTheme(
   preference: ThemeModePreference,
   systemColorScheme: ReturnType<typeof useSystemColorScheme>,
-): ResolvedTheme {
+): ThemeMode {
   if (preference === 'system') {
     return systemColorScheme === 'dark' ? 'dark' : 'light';
   }
@@ -38,9 +38,8 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
   const [isReady, setIsReady] = useState(false);
 
   const resolvedTheme = resolveTheme(preference, systemColorScheme);
-  const colors = Colors[resolvedTheme];
-  const navigationTheme = useMemo(() => buildNavigationTheme(resolvedTheme), [resolvedTheme]);
-  const themeVariables = useMemo(() => vars(buildThemeVariables(resolvedTheme)), [resolvedTheme]);
+  const colors = THEME[resolvedTheme];
+  const navigationTheme = useMemo(() => NAV_THEME[resolvedTheme], [resolvedTheme]);
 
   useEffect(() => {
     let isMounted = true;
@@ -90,15 +89,7 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     [colors, isReady, navigationTheme, preference, resolvedTheme],
   );
 
-  return (
-    <ThemeContext.Provider value={contextValue}>
-      <NavigationThemeProvider value={navigationTheme ?? DefaultTheme}>
-        <View style={themeVariables} className="flex-1 bg-background">
-          {children}
-        </View>
-      </NavigationThemeProvider>
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 }
 
 export function useAppTheme() {

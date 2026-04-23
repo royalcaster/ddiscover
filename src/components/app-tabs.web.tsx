@@ -8,13 +8,13 @@ import {
 } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 
 import { ExternalLink } from './external-link';
-import { ThemedText } from './themed-text';
-import { ThemedView } from './themed-view';
+import { Text } from './ui/text';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function AppTabs() {
   return (
@@ -37,41 +37,40 @@ export default function AppTabs() {
 export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
+      <View
+        className={isFocused ? 'rounded-lg bg-secondary px-4 py-2' : 'rounded-lg bg-card px-4 py-2'}
         style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+        <Text className={isFocused ? 'text-foreground' : 'text-muted-foreground'}>
           {children}
-        </ThemedText>
-      </ThemedView>
+        </Text>
+      </View>
     </Pressable>
   );
 }
 
 export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = useTheme();
 
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
-        </ThemedText>
+      <View className="bg-card" style={styles.innerContainer}>
+        <Text className="text-sm font-semibold" style={styles.brandText}>
+          DDiscover
+        </Text>
 
         {props.children}
 
         <ExternalLink href="https://docs.expo.dev" asChild>
           <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
+            <Text className="text-sm text-muted-foreground">Docs</Text>
             <SymbolView
-              tintColor={colors.text}
+              tintColor={colors.foreground}
               name={{ ios: 'arrow.up.right.square', web: 'link' }}
               size={12}
             />
           </Pressable>
         </ExternalLink>
-      </ThemedView>
+      </View>
     </View>
   );
 }
