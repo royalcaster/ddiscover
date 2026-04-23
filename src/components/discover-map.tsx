@@ -4,8 +4,9 @@ import { previewClubs } from '@/lib/discovery';
 
 export function DiscoverMap() {
   return (
-    <View className="relative h-[360px] overflow-hidden rounded-[28px] border border-border bg-[#11110f]">
+    <View className="relative h-[388px] overflow-hidden rounded-[26px] border border-border bg-[#11110f]">
       <View className="absolute inset-0 bg-[#141412]" />
+      <View className="absolute inset-0 bg-[#191917]/80" />
 
       <View className="absolute inset-0">
         <View className="absolute left-[8%] top-[10%] h-[1px] w-[78%] rotate-[16deg] bg-white/8" />
@@ -23,19 +24,20 @@ export function DiscoverMap() {
         <View className="absolute left-[22%] top-[2%] h-[290px] w-[290px] rounded-full border border-white/6" />
       </View>
 
-      <View className="absolute left-[18%] top-[18%] h-[240px] w-[32px] rounded-full bg-[#1b2b44]/70" />
+      <View className="absolute left-[18%] top-[16%] h-[260px] w-[30px] rounded-full bg-[#233b5c]/65" />
+      <View className="absolute left-[25%] top-[18%] h-[220px] w-[12px] rounded-full bg-white/5" />
 
       {previewClubs.map((club) => (
         <View
           key={club.id}
-          className="absolute -ml-5 -mt-5 h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-card"
+          className="absolute -ml-4 -mt-4 h-8 w-8 items-center justify-center rounded-full border border-white/12 bg-black/60"
           style={{ left: club.x, top: club.y }}>
-          <View className="h-4 w-4 rounded-full bg-primary" />
+          <View className="h-3.5 w-3.5 rounded-full bg-primary" />
         </View>
       ))}
 
-      <View className="absolute left-[42%] top-[36%] -ml-7 -mt-7 h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-black/30">
-        <View className="h-6 w-6 rounded-full border-2 border-primary-foreground" />
+      <View className="absolute left-[42%] top-[36%] -ml-8 -mt-8 h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-black/30">
+        <View className="h-7 w-7 rounded-full border-[3px] border-primary-foreground" />
       </View>
     </View>
   );

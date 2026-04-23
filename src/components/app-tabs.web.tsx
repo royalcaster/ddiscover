@@ -24,19 +24,19 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="discover" href={'/' as Href} asChild>
-            <TabButton>Discover</TabButton>
+            <TabButton>Entdecken</TabButton>
           </TabTrigger>
           <TabTrigger name="calendar" href={'/calendar' as Href} asChild>
-            <TabButton>Calendar</TabButton>
+            <TabButton>Kalender</TabButton>
           </TabTrigger>
           <TabTrigger name="favorites" href={'/favorites' as Href} asChild>
-            <TabButton>Favorites</TabButton>
+            <TabButton>Favoriten</TabButton>
           </TabTrigger>
           <TabTrigger name="route" href={'/route' as Href} asChild>
             <TabButton>Route</TabButton>
           </TabTrigger>
           <TabTrigger name="profile" href={'/profile' as Href} asChild>
-            <TabButton>Profile</TabButton>
+            <TabButton>Profil</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -70,9 +70,9 @@ export function CustomTabList(props: TabListProps) {
 
         {props.children}
 
-        <ExternalLink href="https://docs.expo.dev" asChild>
+        <ExternalLink href="https://vdsc.de/veranstaltungen.html" asChild>
           <Pressable style={styles.externalPressable}>
-            <Text className="text-sm text-muted-foreground">Docs</Text>
+            <Text className="text-sm text-muted-foreground">VDSC</Text>
             <SymbolView
               tintColor={colors.foreground}
               name={{ ios: 'arrow.up.right.square', web: 'link' }}

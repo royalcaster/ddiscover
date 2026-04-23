@@ -9,15 +9,15 @@ export default function AppTabs() {
   return (
     <NativeTabs
       backgroundColor={colors.background}
-      indicatorColor={colors.secondary}
+      indicatorColor={colors.primary}
       labelStyle={{ selected: { color: colors.foreground } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Entdecken</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'map', selected: 'map.fill' }} md="explore" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="calendar">
-        <NativeTabs.Trigger.Label>Calendar</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Kalender</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: 'calendar', selected: 'calendar' }}
           md="calendar_today"
@@ -25,8 +25,11 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="favorites">
-        <NativeTabs.Trigger.Label>Favorites</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'heart', selected: 'heart.fill' }} md="favorite_border" />
+        <NativeTabs.Trigger.Label>Favoriten</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'heart', selected: 'heart.fill' }}
+          md="favorite_border"
+        />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="route">
@@ -35,8 +38,11 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} md="person_outline" />
+        <NativeTabs.Trigger.Label>Profil</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person', selected: 'person.fill' }}
+          md="person_outline"
+        />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

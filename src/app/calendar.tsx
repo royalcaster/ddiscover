@@ -1,19 +1,15 @@
-import { Heart, SlidersHorizontal } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { useQuery } from 'convex/react';
+import { Heart, SlidersHorizontal } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { api } from '../../convex/_generated/api';
 import { ScreenShell } from '@/components/screen-shell';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { calendarDays, previewClubs } from '@/lib/discovery';
 
 function dayLabel(timestamp: number) {
   return new Intl.DateTimeFormat('de-DE', {
@@ -31,52 +27,48 @@ function timeLabel(timestamp: number) {
 
 export default function CalendarScreen() {
   const theme = useTheme();
-  const events = useQuery(api.events.listUpcoming, { limit: 12 }) ?? [];
-  const activeDay = events[0]?.startsAt ?? Date.now();
+  const events = useQuery(api.events.listUpcoming, { limit: 8 }) ?? [];
 
-  const dayBuckets = Array.from(
-    new Map(
-      events.map((event) => [
-        new Date(event.startsAt).toDateString(),
-        {
-          key: new Date(event.startsAt).toDateString(),
-          label: dayLabel(event.startsAt),
-          events: events.filter(
-            (candidate) =>
-              new Date(candidate.startsAt).toDateString() === new Date(event.startsAt).toDateString(),
-          ),
-        },
-      ]),
-    ).values(),
-  );
-
-  const activeBucket = dayBuckets[0];
+  const eventCards = events.map((event, index) => ({
+    event,
+    imageUrl: previewClubs[index % previewClubs.length]?.imageUrl,
+  }));
 
   return (
     <ScreenShell
-      eyebrow="Kalender"
-      title="Heute und die naechsten Slots"
-      description="Dense event scheduling with fast club context, matching the screenshot structure more closely than the earlier feed."
+      title="Kalender"
       headerRight={
-        <Button variant="secondary" size="icon">
-          <SlidersHorizontal size={17} color={theme.foreground} />
+        <Button variant="secondary" size="icon" className="h-10 w-10 rounded-full">
+          <SlidersHorizontal size={16} color={theme.foreground} />
         </Button>
       }>
       <View className="gap-4">
-        <View className="flex-row items-center gap-2">
-          {dayBuckets.map((bucket, index) => {
-            const isActive = index === 0;
+        <View className="flex-row items-center justify-between gap-2">
+          {calendarDays.map((item, index) => {
+            const isActive = index === 5;
             return (
               <View
-                key={bucket.key}
-                className={isActive ? 'rounded-2xl bg-primary px-3 py-2' : 'rounded-2xl bg-card px-3 py-2'}>
+                key={`${item.shortLabel}-${item.day}`}
+                className={
+                  isActive
+                    ? 'items-center rounded-[16px] bg-primary px-2.5 py-2'
+                    : 'items-center rounded-[16px] px-2.5 py-2'
+                }>
                 <Text
                   className={
                     isActive
-                      ? 'text-center text-xs font-semibold text-primary-foreground'
-                      : 'text-muted-foreground text-center text-xs font-medium'
+                      ? 'text-[11px] font-medium text-primary-foreground'
+                      : 'text-muted-foreground text-[11px] font-medium'
                   }>
-                  {bucket.label}
+                  {item.shortLabel}
+                </Text>
+                <Text
+                  className={
+                    isActive
+                      ? 'text-[13px] font-semibold text-primary-foreground'
+                      : 'text-[13px] font-semibold'
+                  }>
+                  {item.day}
                 </Text>
               </View>
             );
@@ -84,35 +76,42 @@ export default function CalendarScreen() {
         </View>
 
         <View className="flex-row items-center justify-between gap-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="rounded-full px-4">
             <Text>Alle Clubs</Text>
           </Button>
-          <Text className="text-muted-foreground text-sm">
-            {dayLabel(activeDay)} • {activeBucket?.events.length ?? 0} Events
+          <Text className="text-muted-foreground text-[13px]">
+            {events[0] ? `${dayLabel(events[0].startsAt)} · ${events.length} Events` : 'Keine Events'}
           </Text>
         </View>
 
         <View className="gap-3">
-          {(activeBucket?.events ?? []).map((event, index) => (
-            <Card key={event._id} className="py-4">
-              <CardContent className="flex-row items-center gap-4 px-4">
-                <View className="h-20 w-20 rounded-2xl bg-secondary" />
-                <View className="flex-1 gap-1">
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-muted-foreground text-xs">{timeLabel(event.startsAt)}</Text>
-                    <Badge variant={index === 0 ? 'default' : 'outline'}>
-                      <Text>{event.source?.toUpperCase() ?? 'VDSC'}</Text>
-                    </Badge>
+          {eventCards.map(({ event, imageUrl }, index) => (
+            <Card key={event._id} className="gap-0 rounded-[22px] py-0">
+              <CardContent className="flex-row gap-3 px-3 py-3">
+                <Image source={imageUrl} contentFit="cover" className="h-24 w-24 rounded-[16px]" />
+
+                <View className="flex-1 justify-between">
+                  <View className="gap-1">
+                    <Text className="text-muted-foreground text-[12px]">{timeLabel(event.startsAt)}</Text>
+                    <CardTitle className="text-[18px]">{event.title}</CardTitle>
+                    <CardDescription className="text-[13px]">
+                      {event.locationName ?? 'Club folgt'}
+                    </CardDescription>
+                    <Text className="text-muted-foreground text-[12px]">
+                      {event.source?.toUpperCase() ?? 'VDSC'} •{' '}
+                      {new Date(event.startsAt).toLocaleDateString('de-DE')}
+                    </Text>
                   </View>
-                  <CardTitle className="text-[18px]">{event.title}</CardTitle>
-                  <CardDescription>{event.locationName ?? 'Venue pending'}</CardDescription>
-                  <Text className="text-muted-foreground text-sm">
-                    {timeLabel(event.startsAt)} • {new Date(event.startsAt).toLocaleDateString('de-DE')}
-                  </Text>
+
+                  <View className="flex-row items-center justify-between gap-2 pt-1">
+                    <Text className="text-[12px] font-medium">
+                      {previewClubs[index % previewClubs.length]?.tonight ?? 'Heute im Club'}
+                    </Text>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                      <Heart size={16} color={theme.mutedForeground} />
+                    </Button>
+                  </View>
                 </View>
-                <Button variant="ghost" size="icon">
-                  <Heart size={18} color={theme.mutedForeground} />
-                </Button>
               </CardContent>
             </Card>
           ))}

@@ -1,23 +1,17 @@
-import { CalendarDays, Heart, MapPin, Route as RouteIcon, Search } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { useQuery } from 'convex/react';
+import { Heart, MapPin, Route as RouteIcon, Search, SlidersHorizontal } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { api } from '../../convex/_generated/api';
 import { DiscoverMap } from '@/components/discover-map';
 import { ScreenShell } from '@/components/screen-shell';
-import { ThemeModeToggle } from '@/components/theme-mode-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { previewClubs } from '@/lib/discovery';
 import { useTheme } from '@/hooks/use-theme';
+import { previewClubs } from '@/lib/discovery';
 
 function formatStartsAt(timestamp?: number) {
   if (!timestamp) return 'Heute';
@@ -35,144 +29,134 @@ export default function DiscoverScreen() {
   const clubs = useQuery(api.clubs.list, { limit: 8 });
   const featuredClub = clubs?.find((club) => club.nextEvent) ?? clubs?.[0] ?? null;
   const nextEvent = featuredClub?.nextEvent ?? null;
+  const heroClub = previewClubs[2];
+  const nearbyClubs = previewClubs.slice(0, 3);
 
   return (
     <ScreenShell
-      eyebrow="Entdecken"
-      title="Dein Abend in Dresden"
-      description="Map-first discovery for clubs, events, and the next useful route. This replaces the prototype feed with the actual product structure."
-      headerRight={<ThemeModeToggle />}>
-      <View className="gap-4">
-        <View className="flex-row items-center justify-between gap-3">
-          <View className="flex-row items-center gap-2">
-            <Button variant="secondary" size="icon">
-              <Search size={18} color={theme.foreground} />
-            </Button>
-            <Button variant="outline" size="sm">
-              <Text>Alle Clubs</Text>
-            </Button>
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Badge variant="outline">
-              <Text>{clubs?.length ?? 0} Clubs</Text>
-            </Badge>
-            <Badge variant="default">
-              <Text>{previewClubs.length} Spots</Text>
-            </Badge>
-          </View>
+      title="Entdecken"
+      headerRight={
+        <View className="flex-row items-center gap-2">
+          <Button variant="secondary" size="icon" className="h-10 w-10 rounded-full">
+            <Search size={16} color={theme.foreground} />
+          </Button>
+          <Button variant="secondary" size="icon" className="h-10 w-10 rounded-full">
+            <SlidersHorizontal size={16} color={theme.foreground} />
+          </Button>
         </View>
-
+      }>
+      <View className="gap-4">
         <DiscoverMap />
 
-        <Card className="-mt-24 ml-3 mr-3 border-border/80 bg-card/95 py-4">
-          <CardContent className="gap-4 px-4">
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="gap-2">
-                <CardTitle className="text-[22px]">{featuredClub?.name ?? 'Pulse'}</CardTitle>
-                <CardDescription className="text-sm">
-                  {featuredClub?.city ?? 'Neustadt'} • {featuredClub?.source?.toUpperCase() ?? 'VDSC'}
-                </CardDescription>
+        <Card className="-mt-[92px] mx-3 rounded-[22px] border-border/70 bg-card/95 py-0">
+          <CardContent className="gap-3 px-3 py-3">
+            <View className="flex-row gap-3">
+              <Image source={heroClub.imageUrl} contentFit="cover" className="h-20 w-24 rounded-[14px]" />
+              <View className="flex-1 justify-between py-0.5">
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="gap-1">
+                    <CardTitle className="text-[20px]">{featuredClub?.name ?? heroClub.name}</CardTitle>
+                    <Text className="text-muted-foreground text-[13px]">
+                      {featuredClub?.city ?? heroClub.district} • {heroClub.category}
+                    </Text>
+                  </View>
+                  <Text className="text-muted-foreground pt-0.5 text-[12px]">{heroClub.walkDistance}</Text>
+                </View>
+
+                <View className="gap-0.5">
+                  <Text className="text-[13px] font-medium">Heute: {nextEvent?.title ?? heroClub.tonight}</Text>
+                  <Text className="text-muted-foreground text-[12px]">
+                    {formatStartsAt(nextEvent?.startsAt)}
+                  </Text>
+                </View>
               </View>
-              <Text className="text-muted-foreground text-sm">
-                {nextEvent ? '350 m' : 'Live'}
-              </Text>
             </View>
 
-            <View className="flex-row flex-wrap gap-4">
-              <View className="min-w-[180px] flex-1 gap-1">
-                <Text className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.16em]">
-                  Heute
-                </Text>
-                <Text className="text-base font-medium">
-                  {nextEvent?.title ?? 'Kollektiv Nacht'}
-                </Text>
-                <Text className="text-muted-foreground text-sm">
-                  {formatStartsAt(nextEvent?.startsAt)}
-                </Text>
-              </View>
-              <View className="min-w-[180px] flex-1 gap-1">
-                <Text className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.16em]">
-                  Fokus
-                </Text>
-                <Text className="text-base font-medium">
-                  {featuredClub?.websiteUrl ? 'Club Profil bereit' : 'Mehr Daten folgen'}
-                </Text>
-                <Text className="text-muted-foreground text-sm">
-                  {featuredClub?.addressLine ?? 'Koenigsbruecker Str. 39'}
-                </Text>
+            <View className="flex-row items-center justify-between gap-3">
+              <Button variant="outline" size="sm" className="rounded-full px-4">
+                <Text>Alle Clubs</Text>
+              </Button>
+              <View className="flex-row items-center gap-2">
+                <Badge variant="default" className="rounded-full px-3 py-1">
+                  <Text>{previewClubs.length} Spots</Text>
+                </Badge>
+                <Badge variant="outline" className="rounded-full px-3 py-1">
+                  <Text>{clubs?.length ?? 0} Clubs</Text>
+                </Badge>
               </View>
             </View>
           </CardContent>
         </Card>
 
-        <View className="gap-3 pt-2">
+        <View className="gap-3 pt-1">
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-lg font-semibold">In der Naehe</Text>
+            <Text className="text-lg font-semibold">In der Nähe</Text>
             <Text className="text-muted-foreground text-sm">Kurzstrecke zuerst</Text>
           </View>
 
-          {previewClubs.map((club) => (
-            <Card key={club.id} className="gap-0 py-4">
-              <CardContent className="flex-row items-center gap-4 px-4">
-                <View className="h-16 w-16 rounded-2xl bg-secondary" />
+          {nearbyClubs.map((club) => (
+            <Card key={club.id} className="gap-0 rounded-[22px] py-0">
+              <CardContent className="flex-row items-center gap-3 px-3 py-3">
+                <Image source={club.imageUrl} contentFit="cover" className="h-20 w-20 rounded-[16px]" />
                 <View className="flex-1 gap-1">
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-base font-semibold">{club.name}</Text>
-                    <Badge variant="outline">
-                      <Text>{club.category}</Text>
-                    </Badge>
+                  <View className="flex-row items-start justify-between gap-2">
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-base font-semibold">{club.name}</Text>
+                      <Text className="text-muted-foreground text-[13px]">
+                        {club.category} • {club.district}
+                      </Text>
+                    </View>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                      <Heart size={16} color={theme.mutedForeground} />
+                    </Button>
                   </View>
-                  <Text className="text-muted-foreground text-sm">
-                    {club.district} • {club.minutesAway} Min.
-                  </Text>
-                  <Text className="text-muted-foreground text-sm">
-                    Heute: {featuredClub?.nextEvent?.title ?? 'Kollektiv Nacht'}
+                  <Text className="text-[13px] font-medium">{club.tonight}</Text>
+                  <Text className="text-muted-foreground text-[12px]">
+                    {club.walkDistance} • {club.minutesAway} Min.
                   </Text>
                 </View>
-                <Button variant="ghost" size="icon">
-                  <Heart size={18} color={theme.mutedForeground} />
-                </Button>
               </CardContent>
             </Card>
           ))}
         </View>
 
-        <View className="grid gap-3">
-          <View className="flex-row gap-3">
-            <Card className="min-h-[132px] flex-1 py-4">
-              <CardContent className="gap-3 px-4">
-                <MapPin size={18} color={theme.primary} />
-                <Text className="text-base font-semibold">Lokale Transparenz</Text>
-                <Text className="text-muted-foreground text-sm leading-5">
-                  Automatisierte Club- und Eventdaten statt verstreuter Links.
-                </Text>
-              </CardContent>
-            </Card>
-            <Card className="min-h-[132px] flex-1 py-4">
-              <CardContent className="gap-3 px-4">
-                <CalendarDays size={18} color={theme.primary} />
-                <Text className="text-base font-semibold">Kalender zuerst</Text>
-                <Text className="text-muted-foreground text-sm leading-5">
-                  Zeitraster, Clubfilter und dichte Eventkarten statt Listenblöcke.
-                </Text>
-              </CardContent>
-            </Card>
-          </View>
-          <Card className="py-4">
-            <CardFooter className="justify-between gap-3 px-4">
-              <View className="gap-1">
-                <Text className="text-base font-semibold">Naechster Schritt</Text>
-                <Text className="text-muted-foreground text-sm">
-                  Build the real event detail and route flows on top of this shell.
+        <Card className="rounded-[22px] py-0">
+          <CardContent className="gap-4 px-4 py-4">
+            <View className="flex-row items-center justify-between gap-3">
+              <View className="gap-0.5">
+                <Text className="text-[15px] font-semibold">Schnellzugriffe</Text>
+                <Text className="text-muted-foreground text-[12px]">
+                  Kalender, Wege und Favoriten auf dem gleichen Niveau.
                 </Text>
               </View>
-              <Button variant="default">
-                <RouteIcon size={16} color={theme.primaryForeground} />
-                <Text className="text-primary-foreground">Route starten</Text>
-              </Button>
-            </CardFooter>
-          </Card>
-        </View>
+              <MapPin size={18} color={theme.primary} />
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1 gap-2 rounded-[18px] bg-secondary p-3">
+                <Text className="text-muted-foreground text-[12px] font-semibold uppercase tracking-[0.16em]">
+                  Nächste Route
+                </Text>
+                <Text className="text-[15px] font-semibold">Louisenstraße → Pulse</Text>
+                <Text className="text-muted-foreground text-[12px]">23 Min. mit Tram 7</Text>
+              </View>
+              <View className="flex-1 gap-2 rounded-[18px] bg-secondary p-3">
+                <Text className="text-muted-foreground text-[12px] font-semibold uppercase tracking-[0.16em]">
+                  Datenstand
+                </Text>
+                <Text className="text-[15px] font-semibold">VDSC + Clubs</Text>
+                <Text className="text-muted-foreground text-[12px]">
+                  {clubs?.length ?? 0} Clubs verknüpft
+                </Text>
+              </View>
+            </View>
+
+            <Button variant="default" className="rounded-full">
+              <RouteIcon size={16} color={theme.primaryForeground} />
+              <Text className="text-primary-foreground">Route starten</Text>
+            </Button>
+          </CardContent>
+        </Card>
       </View>
     </ScreenShell>
   );
