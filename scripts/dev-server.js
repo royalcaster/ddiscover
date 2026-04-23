@@ -3,8 +3,8 @@ const { execSync, spawn } = require('node:child_process');
 function startExpoDevClient() {
   const command =
     process.platform === 'win32'
-      ? 'npm.cmd run start -- --dev-client'
-      : 'npm run start -- --dev-client';
+      ? 'npm.cmd run start -- --dev-client --clear'
+      : 'npm run start -- --dev-client --clear';
   const child = spawn(command, {
     stdio: 'inherit',
     shell: true,

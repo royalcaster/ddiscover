@@ -43,13 +43,23 @@ function adb(args, options = {}) {
   });
 }
 
-function getRunningEmulators() {
+function listAdbDevices() {
   const output = adb(['devices']);
+
   return output
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.startsWith('emulator-'))
-    .map((line) => line.split(/\s+/)[0]);
+    .map((line) => {
+      const [serial, state] = line.split(/\s+/);
+      return { serial, state };
+    });
+}
+
+function getRunningEmulators() {
+  return listAdbDevices()
+    .filter((device) => device.state === 'device')
+    .map((device) => device.serial);
 }
 
 function startAvdIfNeeded(avdName) {
@@ -81,7 +91,7 @@ function startAvdIfNeeded(avdName) {
 }
 
 async function waitForEmulator() {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+  for (let attempt = 0; attempt < 60; attempt += 1) {
     const running = getRunningEmulators();
     if (running.length > 0) {
       console.log(`Emulator detected: ${running[0]}`);
@@ -91,6 +101,48 @@ async function waitForEmulator() {
   }
 
   console.error('Timed out waiting for emulator to appear in adb.');
+  process.exit(1);
+}
+
+function isDeviceBootCompleted(device) {
+  try {
+    const output = adb(['-s', device, 'shell', 'getprop', 'sys.boot_completed'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return output.trim() === '1';
+  } catch {
+    return false;
+  }
+}
+
+function isDeviceResponsive(device) {
+  try {
+    const output = adb(['-s', device, 'shell', 'getprop', 'ro.product.cpu.abilist'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return output.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function waitForDeviceReady(device) {
+  for (let attempt = 0; attempt < 90; attempt += 1) {
+    const running = getRunningEmulators();
+    if (!running.includes(device)) {
+      await sleep(2000);
+      continue;
+    }
+
+    if (isDeviceBootCompleted(device) && isDeviceResponsive(device)) {
+      console.log(`Emulator ready: ${device}`);
+      return;
+    }
+
+    await sleep(2000);
+  }
+
+  console.error(`Timed out waiting for emulator to finish booting: ${device}`);
   process.exit(1);
 }
 
@@ -127,8 +179,8 @@ function startMetroIfNeeded() {
 
   const command =
     process.platform === 'win32'
-      ? 'npm.cmd run start -- --dev-client'
-      : 'npm run start -- --dev-client';
+      ? 'npm.cmd run start -- --dev-client --clear'
+      : 'npm run start -- --dev-client --clear';
 
   spawn(command, {
     shell: true,
@@ -166,6 +218,7 @@ async function main() {
   const requestedAvd = process.argv[2];
   startAvdIfNeeded(requestedAvd);
   const device = await waitForEmulator();
+  await waitForDeviceReady(device);
   enableReverse(device);
   startMetroIfNeeded();
   await sleep(3000);
