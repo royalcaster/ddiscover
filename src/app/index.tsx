@@ -1,17 +1,26 @@
-import { CalendarDays, Clock3, Globe2, MapPinned } from 'lucide-react-native';
+import { CalendarDays, Heart, MapPin, Route as RouteIcon, Search } from 'lucide-react-native';
 import { useQuery } from 'convex/react';
-import { Linking, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 
 import { api } from '../../convex/_generated/api';
+import { DiscoverMap } from '@/components/discover-map';
+import { ScreenShell } from '@/components/screen-shell';
 import { ThemeModeToggle } from '@/components/theme-mode-toggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardTitle,
+} from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { previewClubs } from '@/lib/discovery';
 import { useTheme } from '@/hooks/use-theme';
 
-function formatStartsAt(timestamp: number) {
+function formatStartsAt(timestamp?: number) {
+  if (!timestamp) return 'Heute';
   return new Intl.DateTimeFormat('de-DE', {
     weekday: 'short',
     day: '2-digit',
@@ -21,132 +30,150 @@ function formatStartsAt(timestamp: number) {
   }).format(new Date(timestamp));
 }
 
-function sourceLabel(source?: string) {
-  return source ? source.toUpperCase() : 'MANUAL';
-}
-
-export default function EventsScreen() {
+export default function DiscoverScreen() {
   const theme = useTheme();
-  const upcomingEvents = useQuery(api.events.listUpcoming, { limit: 20 });
+  const clubs = useQuery(api.clubs.list, { limit: 8 });
+  const featuredClub = clubs?.find((club) => club.nextEvent) ?? clubs?.[0] ?? null;
+  const nextEvent = featuredClub?.nextEvent ?? null;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="mx-auto w-full max-w-[860px] gap-6 px-4 pb-28 pt-4">
-        <View className="gap-4">
-          <View className="flex-row items-start justify-between gap-4">
-            <View className="max-w-[560px] gap-3">
-              <Badge variant="default">
-                <Text>Live Calendar</Text>
-              </Badge>
-              <Text variant="h1" className="text-left">
-                Upcoming events across Dresden student clubs
-              </Text>
-              <Text variant="muted">
-                Imported from the VDSC feed and streamed through Convex into the app.
+    <ScreenShell
+      eyebrow="Entdecken"
+      title="Dein Abend in Dresden"
+      description="Map-first discovery for clubs, events, and the next useful route. This replaces the prototype feed with the actual product structure."
+      headerRight={<ThemeModeToggle />}>
+      <View className="gap-4">
+        <View className="flex-row items-center justify-between gap-3">
+          <View className="flex-row items-center gap-2">
+            <Button variant="secondary" size="icon">
+              <Search size={18} color={theme.foreground} />
+            </Button>
+            <Button variant="outline" size="sm">
+              <Text>Alle Clubs</Text>
+            </Button>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Badge variant="outline">
+              <Text>{clubs?.length ?? 0} Clubs</Text>
+            </Badge>
+            <Badge variant="default">
+              <Text>{previewClubs.length} Spots</Text>
+            </Badge>
+          </View>
+        </View>
+
+        <DiscoverMap />
+
+        <Card className="-mt-24 ml-3 mr-3 border-border/80 bg-card/95 py-4">
+          <CardContent className="gap-4 px-4">
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="gap-2">
+                <CardTitle className="text-[22px]">{featuredClub?.name ?? 'Pulse'}</CardTitle>
+                <CardDescription className="text-sm">
+                  {featuredClub?.city ?? 'Neustadt'} • {featuredClub?.source?.toUpperCase() ?? 'VDSC'}
+                </CardDescription>
+              </View>
+              <Text className="text-muted-foreground text-sm">
+                {nextEvent ? '350 m' : 'Live'}
               </Text>
             </View>
-            <ThemeModeToggle />
+
+            <View className="flex-row flex-wrap gap-4">
+              <View className="min-w-[180px] flex-1 gap-1">
+                <Text className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.16em]">
+                  Heute
+                </Text>
+                <Text className="text-base font-medium">
+                  {nextEvent?.title ?? 'Kollektiv Nacht'}
+                </Text>
+                <Text className="text-muted-foreground text-sm">
+                  {formatStartsAt(nextEvent?.startsAt)}
+                </Text>
+              </View>
+              <View className="min-w-[180px] flex-1 gap-1">
+                <Text className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.16em]">
+                  Fokus
+                </Text>
+                <Text className="text-base font-medium">
+                  {featuredClub?.websiteUrl ? 'Club Profil bereit' : 'Mehr Daten folgen'}
+                </Text>
+                <Text className="text-muted-foreground text-sm">
+                  {featuredClub?.addressLine ?? 'Koenigsbruecker Str. 39'}
+                </Text>
+              </View>
+            </View>
+          </CardContent>
+        </Card>
+
+        <View className="gap-3 pt-2">
+          <View className="flex-row items-center justify-between gap-3">
+            <Text className="text-lg font-semibold">In der Naehe</Text>
+            <Text className="text-muted-foreground text-sm">Kurzstrecke zuerst</Text>
           </View>
 
-          <View className="flex-row flex-wrap gap-3">
-            <Card className="min-w-[170px] flex-1">
-              <CardHeader className="gap-1 pb-2">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                  Events loaded
-                </Text>
-                <Text className="text-4xl font-semibold">{upcomingEvents?.length ?? '...'}</Text>
-              </CardHeader>
-            </Card>
-            <Card className="min-w-[170px] flex-1">
-              <CardHeader className="gap-1 pb-2">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                  Data source
-                </Text>
-                <Text variant="large">VDSC JSON feed</Text>
-              </CardHeader>
-            </Card>
-          </View>
-        </View>
-
-        {upcomingEvents === undefined ? (
-          <Card>
-            <CardContent className="pt-4">
-              <Text variant="h4">Loading events</Text>
-              <Text variant="muted">Waiting for the Convex query to resolve.</Text>
-            </CardContent>
-          </Card>
-        ) : upcomingEvents.length === 0 ? (
-          <Card>
-            <CardContent className="pt-4">
-              <Text variant="h4">No imported events yet</Text>
-              <Text variant="muted">
-                Run the import action and this list will populate automatically.
-              </Text>
-            </CardContent>
-          </Card>
-        ) : (
-          upcomingEvents.map((event) => (
-            <Card key={event._id}>
-              <CardHeader className="gap-3">
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-1 gap-3">
-                    <View className="flex-row flex-wrap items-center gap-2">
-                      <Badge variant="default">
-                        <Text>{sourceLabel(event.source)}</Text>
-                      </Badge>
-                      <Badge variant="outline">
-                        <Text>{event.locationName ?? 'Venue pending'}</Text>
-                      </Badge>
-                    </View>
-                    <CardTitle className="text-2xl">{event.title}</CardTitle>
+          {previewClubs.map((club) => (
+            <Card key={club.id} className="gap-0 py-4">
+              <CardContent className="flex-row items-center gap-4 px-4">
+                <View className="h-16 w-16 rounded-2xl bg-secondary" />
+                <View className="flex-1 gap-1">
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-base font-semibold">{club.name}</Text>
+                    <Badge variant="outline">
+                      <Text>{club.category}</Text>
+                    </Badge>
                   </View>
-                  <View className="rounded-lg border border-border bg-secondary px-3 py-2">
-                    <Text className="font-mono text-xs font-semibold uppercase tracking-[0.12em]">
-                      {formatStartsAt(event.startsAt)}
-                    </Text>
-                  </View>
+                  <Text className="text-muted-foreground text-sm">
+                    {club.district} • {club.minutesAway} Min.
+                  </Text>
+                  <Text className="text-muted-foreground text-sm">
+                    Heute: {featuredClub?.nextEvent?.title ?? 'Kollektiv Nacht'}
+                  </Text>
                 </View>
-              </CardHeader>
-
-              <CardContent>
-                <View className="flex-row flex-wrap gap-4">
-                  <View className="min-w-[180px] flex-1 flex-row items-center gap-2">
-                    <Clock3 size={16} color={theme.mutedForeground} />
-                    <Text variant="muted">{formatStartsAt(event.startsAt)}</Text>
-                  </View>
-                  <View className="min-w-[180px] flex-1 flex-row items-center gap-2">
-                    <MapPinned size={16} color={theme.mutedForeground} />
-                    <Text variant="muted">{event.locationName ?? 'Unknown venue'}</Text>
-                  </View>
-                </View>
+                <Button variant="ghost" size="icon">
+                  <Heart size={18} color={theme.mutedForeground} />
+                </Button>
               </CardContent>
-
-              {event.sourceUrl ? (
-                <CardFooter>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onPress={() => {
-                      void Linking.openURL(event.sourceUrl!);
-                    }}>
-                    <Globe2 size={16} color={theme.foreground} />
-                    <Text>Open source</Text>
-                  </Button>
-                </CardFooter>
-              ) : null}
             </Card>
-          ))
-        )}
-
-        <View className="pt-2">
-          <View className="flex-row items-center gap-2">
-            <CalendarDays size={16} color={theme.mutedForeground} />
-            <Text variant="muted">Event data refreshes immediately when Convex documents change.</Text>
-          </View>
+          ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <View className="grid gap-3">
+          <View className="flex-row gap-3">
+            <Card className="min-h-[132px] flex-1 py-4">
+              <CardContent className="gap-3 px-4">
+                <MapPin size={18} color={theme.primary} />
+                <Text className="text-base font-semibold">Lokale Transparenz</Text>
+                <Text className="text-muted-foreground text-sm leading-5">
+                  Automatisierte Club- und Eventdaten statt verstreuter Links.
+                </Text>
+              </CardContent>
+            </Card>
+            <Card className="min-h-[132px] flex-1 py-4">
+              <CardContent className="gap-3 px-4">
+                <CalendarDays size={18} color={theme.primary} />
+                <Text className="text-base font-semibold">Kalender zuerst</Text>
+                <Text className="text-muted-foreground text-sm leading-5">
+                  Zeitraster, Clubfilter und dichte Eventkarten statt Listenblöcke.
+                </Text>
+              </CardContent>
+            </Card>
+          </View>
+          <Card className="py-4">
+            <CardFooter className="justify-between gap-3 px-4">
+              <View className="gap-1">
+                <Text className="text-base font-semibold">Naechster Schritt</Text>
+                <Text className="text-muted-foreground text-sm">
+                  Build the real event detail and route flows on top of this shell.
+                </Text>
+              </View>
+              <Button variant="default">
+                <RouteIcon size={16} color={theme.primaryForeground} />
+                <Text className="text-primary-foreground">Route starten</Text>
+              </Button>
+            </CardFooter>
+          </Card>
+        </View>
+      </View>
+    </ScreenShell>
   );
 }

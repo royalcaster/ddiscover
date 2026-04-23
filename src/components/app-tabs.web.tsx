@@ -6,6 +6,7 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
+import type { Href } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
@@ -22,11 +23,20 @@ export default function AppTabs() {
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
         <CustomTabList>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
+          <TabTrigger name="discover" href={'/' as Href} asChild>
+            <TabButton>Discover</TabButton>
           </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Clubs</TabButton>
+          <TabTrigger name="calendar" href={'/calendar' as Href} asChild>
+            <TabButton>Calendar</TabButton>
+          </TabTrigger>
+          <TabTrigger name="favorites" href={'/favorites' as Href} asChild>
+            <TabButton>Favorites</TabButton>
+          </TabTrigger>
+          <TabTrigger name="route" href={'/route' as Href} asChild>
+            <TabButton>Route</TabButton>
+          </TabTrigger>
+          <TabTrigger name="profile" href={'/profile' as Href} asChild>
+            <TabButton>Profile</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
