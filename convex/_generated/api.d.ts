@@ -8,13 +8,27 @@
  * @module
  */
 
+import type * as clubs from "../clubs.js";
+import type * as events from "../events.js";
+import type * as scraping_clubCatalog from "../scraping/clubCatalog.js";
+import type * as scraping_vdsc from "../scraping/vdsc.js";
+import type * as scraping_vdscParser from "../scraping/vdscParser.js";
+import type * as scraping_vdscTypes from "../scraping/vdscTypes.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  clubs: typeof clubs;
+  events: typeof events;
+  "scraping/clubCatalog": typeof scraping_clubCatalog;
+  "scraping/vdsc": typeof scraping_vdsc;
+  "scraping/vdscParser": typeof scraping_vdscParser;
+  "scraping/vdscTypes": typeof scraping_vdscTypes;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
