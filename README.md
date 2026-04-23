@@ -18,3 +18,8 @@
 - Final project submission deadline: June 28, 2026 at 23:59.
 - The project requires a Learning Journal with activities, dates, times, approximate durations, and transparent documentation of AI prompts in the appendix.
 - Evaluation emphasizes documented code, standardized conventions, appropriate structure and file sizes, useful comments, sensible commit granularity, and a glossary of application-domain terms.
+
+### Stack
+
+- Mobile app: React Native with Expo.
+- Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
