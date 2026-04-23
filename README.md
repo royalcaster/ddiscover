@@ -24,3 +24,9 @@
 - Mobile app: React Native with Expo.
 - Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
 - Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+
+### Local Development
+
+- Install dependencies with `npm install`.
+- Copy `.env.example` to `.env.local` and fill in Convex and Clerk values when those projects are configured.
+- Start the Expo development server with `npm start`.
