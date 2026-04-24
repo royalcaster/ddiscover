@@ -1,0 +1,10 @@
+{
+  "auth_attack_protection": {
+    "bot_protection": {
+      "captcha_enabled": false
+    }
+  },
+  "connection_oauth_google": {
+    "block_email_subaddresses": false
+  }
+}

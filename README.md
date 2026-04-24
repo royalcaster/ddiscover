@@ -24,6 +24,7 @@
 - Mobile app: React Native with Expo.
 - Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
 - Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+- Auth UX: guest-first; Clerk prebuilt sign-in is embedded in the `Profil` tab, while core discovery remains usable without authentication.
 - Event ingestion: Convex action imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json` and upserts events by source key.
 - UI styling: React Native Reusables-compatible NativeWind setup with `components.json`, semantic light/dark tokens, and registry-backed UI primitives aligned to the design reference in `docs/design/`.
 
@@ -43,6 +44,7 @@
 - Stop running emulators: `npm run emu:stop`
 - Start the Expo dev client server: `npm run dev`
 - Stop Metro on port 8081: `npm run dev:stop`
+- Stop stale Metro-like processes on ports 8081 and 8082: `npm run dev:stop:all`
 - Build/install the native Android app: `npm run android`
 - Full emulator dev flow: `npm run android:dev`
 - Full medium-phone emulator dev flow: `npm run android:dev:medium`

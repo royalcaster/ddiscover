@@ -2,15 +2,15 @@ import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { PropsWithChildren } from 'react';
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+import { clerkPublishableKey } from '@/lib/auth';
 
 export function ClerkAuthProvider({ children }: PropsWithChildren) {
-  if (!publishableKey) {
+  if (!clerkPublishableKey) {
     return children;
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       {children}
     </ClerkProvider>
   );
