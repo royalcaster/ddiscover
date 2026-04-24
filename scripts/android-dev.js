@@ -7,6 +7,7 @@ const projectRoot = path.resolve(__dirname, '..');
 const { sdkRoot, androidUserHome, avdHome } = ensureAndroidSdkConfig(projectRoot);
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
 const adbPath = path.join(sdkRoot, 'platform-tools', 'adb.exe');
+const defaultAvdName = process.env.DDISCOVER_ANDROID_AVD || 'ddiscover_dev_device';
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -71,7 +72,9 @@ function startAvdIfNeeded(avdName) {
 
   requireFile(emulatorPath, 'Android emulator');
   const installedAvds = getInstalledAvds();
-  const targetAvd = avdName || installedAvds[0];
+  const targetAvd =
+    avdName ||
+    (installedAvds.includes(defaultAvdName) ? defaultAvdName : installedAvds[0]);
 
   if (!targetAvd) {
     console.error('No AVD available. Create one in Android Studio first.');

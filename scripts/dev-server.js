@@ -15,11 +15,11 @@ function startExpoDevClient() {
   });
 }
 
-function stopMetro() {
+function stopMetroOnPort(port) {
   try {
     if (process.platform === 'win32') {
       const output = execSync(
-        "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\"",
+        `powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique"`,
         { encoding: 'utf8' },
       )
         .split(/\r?\n/)
@@ -27,22 +27,31 @@ function stopMetro() {
         .filter(Boolean);
 
       if (output.length === 0) {
-        console.log('No process is listening on port 8081.');
+        console.log(`No process is listening on port ${port}.`);
         return;
       }
 
       for (const pid of output) {
         execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
-        console.log(`Stopped Metro process on port 8081: PID ${pid}`);
+        console.log(`Stopped process on port ${port}: PID ${pid}`);
       }
       return;
     }
 
-    execSync("lsof -ti tcp:8081 | xargs kill -9", { stdio: 'ignore' });
-    console.log('Stopped Metro process on port 8081.');
+    execSync(`lsof -ti tcp:${port} | xargs kill -9`, { stdio: 'ignore' });
+    console.log(`Stopped process on port ${port}.`);
   } catch {
-    console.log('No process is listening on port 8081.');
+    console.log(`No process is listening on port ${port}.`);
   }
+}
+
+function stopMetroDefault() {
+  stopMetroOnPort(8081);
+}
+
+function stopMetroAllKnown() {
+  stopMetroOnPort(8081);
+  stopMetroOnPort(8082);
 }
 
 const command = process.argv[2];
@@ -52,9 +61,12 @@ switch (command) {
     startExpoDevClient();
     break;
   case 'stop':
-    stopMetro();
+    stopMetroDefault();
+    break;
+  case 'stop-all':
+    stopMetroAllKnown();
     break;
   default:
-    console.log('Usage: node scripts/dev-server.js <start|stop>');
+    console.log('Usage: node scripts/dev-server.js <start|stop|stop-all>');
     process.exit(command ? 1 : 0);
 }
