@@ -1,12 +1,13 @@
-const { execFileSync, spawn } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+const { createAndroidAdbTooling, parseAdbDevices, runAdb } = require('./android-adb');
 
-const sdkRoot = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || path.join(process.env.LOCALAPPDATA || '', 'Android', 'Sdk');
+const projectRoot = path.resolve(__dirname, '..');
+const tooling = createAndroidAdbTooling(projectRoot);
+const sdkRoot = tooling.sdkRoot;
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
-const adbPath = path.join(sdkRoot, 'platform-tools', 'adb.exe');
 const avdHome = process.env.ANDROID_AVD_HOME || path.join(process.env.USERPROFILE || '', '.android', 'avd');
-const androidUserHome = path.join(process.env.USERPROFILE || '', '.android');
 const defaultAvdName = process.env.DDISCOVER_ANDROID_AVD || 'ddiscover_dev_device';
 
 function requireFile(filePath, label) {
@@ -28,22 +29,10 @@ function getInstalledAvds() {
 }
 
 function getRunningEmulators() {
-  requireFile(adbPath, 'adb');
-
-  const output = execFileSync(adbPath, ['devices'], {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      ANDROID_USER_HOME: androidUserHome,
-      ANDROID_AVD_HOME: avdHome,
-    },
-  });
-
-  return output
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('emulator-'))
-    .map((line) => line.split(/\s+/)[0]);
+  const devices = parseAdbDevices(runAdb(tooling, ['devices']));
+  return devices
+    .filter((device) => device.serial.startsWith('emulator-') && device.state === 'device')
+    .map((device) => device.serial);
 }
 
 function listAvds() {
@@ -98,14 +87,7 @@ function reverseMetro() {
   }
 
   for (const device of running) {
-    execFileSync(adbPath, ['-s', device, 'reverse', 'tcp:8081', 'tcp:8081'], {
-      stdio: 'ignore',
-      env: {
-        ...process.env,
-        ANDROID_USER_HOME: androidUserHome,
-        ANDROID_AVD_HOME: avdHome,
-      },
-    });
+    runAdb(tooling, ['-s', device, 'reverse', 'tcp:8081', 'tcp:8081'], { stdio: 'ignore' });
     console.log(`Enabled adb reverse for ${device}: tcp:8081 -> tcp:8081`);
   }
 }
@@ -119,14 +101,7 @@ function stopEmulators() {
   }
 
   for (const device of running) {
-    execFileSync(adbPath, ['-s', device, 'emu', 'kill'], {
-      stdio: 'ignore',
-      env: {
-        ...process.env,
-        ANDROID_USER_HOME: androidUserHome,
-        ANDROID_AVD_HOME: avdHome,
-      },
-    });
+    runAdb(tooling, ['-s', device, 'emu', 'kill'], { stdio: 'ignore' });
     console.log(`Stopped emulator: ${device}`);
   }
 }

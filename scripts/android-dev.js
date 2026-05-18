@@ -1,13 +1,15 @@
-const { execFileSync, execSync, spawn } = require('node:child_process');
+const { execSync, spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { ensureAndroidSdkConfig } = require('./android-sdk');
+const { createAndroidAdbTooling, parseAdbDevices, runAdb } = require('./android-adb');
 
 const projectRoot = path.resolve(__dirname, '..');
-const { sdkRoot, androidUserHome, avdHome } = ensureAndroidSdkConfig(projectRoot);
+const { sdkRoot, avdHome } = ensureAndroidSdkConfig(projectRoot);
+const tooling = createAndroidAdbTooling(projectRoot);
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
-const adbPath = path.join(sdkRoot, 'platform-tools', 'adb.exe');
 const defaultAvdName = process.env.DDISCOVER_ANDROID_AVD || 'ddiscover_dev_device';
+const devServerPort = Number(process.env.EXPO_DEV_SERVER_PORT || 8081);
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -32,29 +34,13 @@ function getInstalledAvds() {
 }
 
 function adb(args, options = {}) {
-  requireFile(adbPath, 'adb');
-  return execFileSync(adbPath, args, {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      ANDROID_USER_HOME: androidUserHome,
-      ANDROID_AVD_HOME: avdHome,
-    },
-    ...options,
-  });
+  return runAdb(tooling, args, options);
 }
 
 function listAdbDevices() {
-  const output = adb(['devices']);
-
-  return output
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('emulator-'))
-    .map((line) => {
-      const [serial, state] = line.split(/\s+/);
-      return { serial, state };
-    });
+  return parseAdbDevices(adb(['devices'])).filter((device) =>
+    device.serial.startsWith('emulator-'),
+  );
 }
 
 function getRunningEmulators() {
@@ -150,64 +136,48 @@ async function waitForDeviceReady(device) {
 }
 
 function enableReverse(device) {
-  adb(['-s', device, 'reverse', 'tcp:8081', 'tcp:8081'], { stdio: 'ignore' });
-  console.log(`Enabled adb reverse for ${device}: tcp:8081 -> tcp:8081`);
+  adb(['-s', device, 'reverse', `tcp:${devServerPort}`, `tcp:${devServerPort}`], { stdio: 'ignore' });
+  console.log(
+    `Enabled adb reverse for ${device}: tcp:${devServerPort} -> tcp:${devServerPort}`,
+  );
 }
 
-function isMetroRunning() {
+function ensurePortIsFree(port) {
   try {
     if (process.platform === 'win32') {
       const output = execSync(
-        "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\"",
+        `powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique"`,
         { encoding: 'utf8' },
       )
         .split(/\r?\n/)
         .map((line) => line.trim())
         .filter(Boolean);
-      return output.length > 0;
+
+      for (const pid of output) {
+        execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
+        console.log(`Freed port ${port} by stopping PID ${pid}.`);
+      }
+      return;
     }
 
-    execSync('lsof -ti tcp:8081', { stdio: 'ignore' });
-    return true;
+    execSync(`lsof -ti tcp:${port} | xargs kill -9`, { stdio: 'ignore' });
+    console.log(`Freed port ${port}.`);
   } catch {
-    return false;
+    // Ignore if port is already free.
   }
-}
-
-function startMetroIfNeeded() {
-  if (isMetroRunning()) {
-    console.log('Metro is already running on port 8081.');
-    return;
-  }
-
-  const command =
-    process.platform === 'win32'
-      ? 'npm.cmd run start -- --dev-client --clear'
-      : 'npm run start -- --dev-client --clear';
-
-  spawn(command, {
-    shell: true,
-    detached: true,
-    stdio: 'ignore',
-  }).unref();
-
-  console.log('Started Metro in the background.');
 }
 
 function runAndroidInstall() {
   const command =
     process.platform === 'win32'
-      ? 'node .\\scripts\\android-run.js --no-bundler'
-      : 'node ./scripts/android-run.js --no-bundler';
+      ? 'node .\\scripts\\android-run.js'
+      : 'node ./scripts/android-run.js';
   const child = spawn(command, {
     stdio: 'inherit',
     shell: true,
     env: {
-      ...process.env,
-      ANDROID_HOME: sdkRoot,
-      ANDROID_SDK_ROOT: sdkRoot,
-      ANDROID_USER_HOME: androidUserHome,
-      ANDROID_AVD_HOME: avdHome,
+      ...tooling.baseEnv,
+      EXPO_DEV_SERVER_PORT: String(devServerPort),
     },
     cwd: projectRoot,
   });
@@ -219,12 +189,12 @@ function runAndroidInstall() {
 
 async function main() {
   const requestedAvd = process.argv[2];
+  ensurePortIsFree(devServerPort);
+  ensurePortIsFree(8082);
   startAvdIfNeeded(requestedAvd);
   const device = await waitForEmulator();
   await waitForDeviceReady(device);
   enableReverse(device);
-  startMetroIfNeeded();
-  await sleep(3000);
   runAndroidInstall();
 }
 
