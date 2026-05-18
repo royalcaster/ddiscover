@@ -39,4 +39,25 @@ export default defineSchema({
     .index('by_club_and_starts_at', ['clubId', 'startsAt'])
     .index('by_starts_at', ['startsAt'])
     .index('by_source_and_source_key', ['source', 'sourceKey']),
+
+  geocodingCache: defineTable({
+    queryKey: v.string(),
+    queryText: v.string(),
+    provider: v.string(),
+    latitude: v.number(),
+    longitude: v.number(),
+    displayName: v.optional(v.string()),
+    lastResolvedAt: v.number(),
+  }).index('by_query_key', ['queryKey']),
+
+  favorites: defineTable({
+    userTokenIdentifier: v.string(),
+    entityType: v.union(v.literal('club'), v.literal('event')),
+    clubId: v.optional(v.id('clubs')),
+    eventId: v.optional(v.id('events')),
+    createdAt: v.number(),
+  })
+    .index('by_user_and_entity_type', ['userTokenIdentifier', 'entityType'])
+    .index('by_user_and_club', ['userTokenIdentifier', 'clubId'])
+    .index('by_user_and_event', ['userTokenIdentifier', 'eventId']),
 });

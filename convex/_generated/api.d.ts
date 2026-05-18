@@ -8,9 +8,13 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as clubs from "../clubs.js";
 import type * as events from "../events.js";
+import type * as favorites from "../favorites.js";
+import type * as geocoding from "../geocoding.js";
 import type * as scraping_clubCatalog from "../scraping/clubCatalog.js";
+import type * as scraping_geocoding from "../scraping/geocoding.js";
 import type * as scraping_vdsc from "../scraping/vdsc.js";
 import type * as scraping_vdscParser from "../scraping/vdscParser.js";
 import type * as scraping_vdscTypes from "../scraping/vdscTypes.js";
@@ -22,9 +26,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   clubs: typeof clubs;
   events: typeof events;
+  favorites: typeof favorites;
+  geocoding: typeof geocoding;
   "scraping/clubCatalog": typeof scraping_clubCatalog;
+  "scraping/geocoding": typeof scraping_geocoding;
   "scraping/vdsc": typeof scraping_vdsc;
   "scraping/vdscParser": typeof scraping_vdscParser;
   "scraping/vdscTypes": typeof scraping_vdscTypes;

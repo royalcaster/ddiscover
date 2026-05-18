@@ -11,6 +11,8 @@ export const scrapedVdscEventValidator = v.object({
   timeText: v.string(),
   title: v.string(),
   startsAt: v.number(),
+  latitude: v.optional(v.number()),
+  longitude: v.optional(v.number()),
   source: v.literal('vdsc'),
   sourceKey: v.string(),
   sourceUrl: v.optional(v.string()),
@@ -27,6 +29,8 @@ export type ScrapedVdscEvent = {
   timeText: string;
   title: string;
   startsAt: number;
+  latitude?: number;
+  longitude?: number;
   source: 'vdsc';
   sourceKey: string;
   sourceUrl?: string;

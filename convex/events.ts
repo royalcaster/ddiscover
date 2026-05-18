@@ -47,6 +47,8 @@ export const upsertScrapedVdscEvents = internalMutation({
           addressLine: event.addressLine,
           postalCode: event.postalCode,
           city: event.city,
+          latitude: event.latitude,
+          longitude: event.longitude,
           lastScrapedAt: args.scrapedAt,
         }));
 
@@ -58,6 +60,8 @@ export const upsertScrapedVdscEvents = internalMutation({
           addressLine: event.addressLine ?? existingClub.addressLine,
           postalCode: event.postalCode ?? existingClub.postalCode,
           city: event.city ?? existingClub.city,
+          latitude: existingClub.latitude ?? event.latitude,
+          longitude: existingClub.longitude ?? event.longitude,
           lastScrapedAt: args.scrapedAt,
         });
       }
@@ -74,6 +78,8 @@ export const upsertScrapedVdscEvents = internalMutation({
         title: event.title,
         startsAt: event.startsAt,
         locationName: event.locationName,
+        latitude: event.latitude ?? existingEvent?.latitude,
+        longitude: event.longitude ?? existingEvent?.longitude,
         source: event.source,
         sourceKey: event.sourceKey,
         sourceUrl: event.sourceUrl,

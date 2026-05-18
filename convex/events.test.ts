@@ -22,6 +22,8 @@ describe('events', () => {
       timeText: '20:00',
       title: 'Semester Opening',
       startsAt: new Date(2026, 3, 24, 20, 0).getTime(),
+      latitude: 51.04012,
+      longitude: 13.73876,
       source: 'vdsc' as const,
       sourceKey: '2026-04-24t18-00-00-000z__club-aquarium-e-v__semester-opening',
       sourceUrl: 'https://vdsc.de/veranstaltungen/example.html',
@@ -54,6 +56,8 @@ describe('events', () => {
       addressLine: 'St. Petersburger Str. 21, 01069 Dresden',
       postalCode: '01069',
       city: 'Dresden',
+      latitude: 51.04012,
+      longitude: 13.73876,
       nextEvent: {
         title: 'Updated Opening',
       },
@@ -65,7 +69,56 @@ describe('events', () => {
       locationName: 'Club Aquarium e. V.',
       addressLine: 'St. Petersburger Str. 21, 01069 Dresden',
       city: 'Dresden',
+      latitude: 51.04012,
+      longitude: 13.73876,
       lastScrapedAt: 2,
+    });
+  });
+
+  test('keeps existing coordinates when later scrape has no geocoding result', async () => {
+    const t = convexTest(schema, modules);
+    const baseEvent = {
+      clubName: 'Club Aquarium e. V.',
+      locationName: 'Club Aquarium e. V.',
+      rawLocation: 'Club Aquarium e. V. St. Petersburger Str. 21 01069 Dresden',
+      addressLine: 'St. Petersburger Str. 21, 01069 Dresden',
+      postalCode: '01069',
+      city: 'Dresden',
+      dayText: '2026-04-24',
+      timeText: '20:00',
+      title: 'Semester Opening',
+      startsAt: new Date(2026, 3, 24, 20, 0).getTime(),
+      source: 'vdsc' as const,
+      sourceKey: '2026-04-24t18-00-00-000z__club-aquarium-e-v__semester-opening',
+      sourceUrl: 'https://vdsc.de/veranstaltungen/example.html',
+    };
+
+    await t.mutation(internal.events.upsertScrapedVdscEvents, {
+      events: [{ ...baseEvent, latitude: 51.04012, longitude: 13.73876 }],
+      scrapedAt: 1,
+    });
+    await t.mutation(internal.events.upsertScrapedVdscEvents, {
+      events: [{ ...baseEvent, title: 'No Coordinates Update' }],
+      scrapedAt: 2,
+    });
+
+    const events = await t.query(api.events.listUpcoming, {
+      now: new Date(2026, 3, 24, 19, 0).getTime(),
+      limit: 10,
+    });
+    const clubs = await t.query(api.clubs.list, {
+      now: new Date(2026, 3, 24, 19, 0).getTime(),
+      limit: 10,
+    });
+
+    expect(events[0]).toMatchObject({
+      title: 'No Coordinates Update',
+      latitude: 51.04012,
+      longitude: 13.73876,
+    });
+    expect(clubs[0]).toMatchObject({
+      latitude: 51.04012,
+      longitude: 13.73876,
     });
   });
 });
