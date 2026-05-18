@@ -26,14 +26,19 @@
 - Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 - Auth UX: guest-first; Clerk prebuilt sign-in is embedded in the `Profil` tab, while core discovery remains usable without authentication.
 - Event ingestion: Convex action imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json` and upserts events by source key.
+- Geocoding pipeline: VDSC imports now enrich club/event coordinates via Nominatim lookup with a Convex `geocodingCache` table to avoid repeated external lookups.
 - UI styling: React Native Reusables-compatible NativeWind setup with `components.json`, semantic light/dark tokens, and registry-backed UI primitives aligned to the design reference in `docs/design/`.
 
 ### Local Development
 
-- Install dependencies with `npm install`.
-- Copy `.env.example` to `.env.local` and fill in Convex and Clerk values when those projects are configured.
-- Start the Expo development server with `npm start`.
+- Install dependencies once with `npm install`.
+- Copy `.env.example` to `.env.local` and fill in the local keys. Android map builds need `GOOGLE_MAPS_ANDROID_API_KEY` or `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`; Google sign-in testing also needs the Clerk Google web and Android client IDs.
+- Start Convex in one terminal and keep it running: `npx convex dev`.
+- Start Android app development in a second terminal: `npm run android:dev`. This starts or reuses the default emulator, applies `adb reverse`, builds/installs the dev client, and starts Metro through Expo.
+- If the dev client is already installed and the emulator/device is already running, start only the Expo dev-client server with `npm run dev`.
+- For web-only checks, run `npm run web` while Convex is running.
 - Run backend and parser tests with `npm test`.
+- Stop stale Metro processes with `npm run dev:stop:all`; stop running emulators with `npm run emu:stop`.
 
 ### Android Commands
 
@@ -45,6 +50,9 @@
 - Start the Expo dev client server: `npm run dev`
 - Stop Metro on port 8081: `npm run dev:stop`
 - Stop stale Metro-like processes on ports 8081 and 8082: `npm run dev:stop:all`
+- Verify adb path/version/device visibility in script environment: `npm run android:adb`
+- Clear app data on active device/emulator: `npm run android:app:clear`
+- Force-stop app on active device/emulator: `npm run android:app:stop`
 - Build/install the native Android app: `npm run android`
 - Full emulator dev flow: `npm run android:dev`
 - Full medium-phone emulator dev flow: `npm run android:dev:medium`
