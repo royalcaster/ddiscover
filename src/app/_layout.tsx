@@ -6,7 +6,6 @@ import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { StatusBar } from 'expo-status-bar';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { ClerkAuthProvider } from '@/providers/clerk-provider';
 import { ConvexClientProvider } from '@/providers/convex-provider';
@@ -18,7 +17,6 @@ function RootLayoutContent() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
-      <AnimatedSplashOverlay />
       <AppTabs />
       <PortalHost />
     </ThemeProvider>

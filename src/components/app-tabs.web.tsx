@@ -29,12 +29,6 @@ export default function AppTabs() {
           <TabTrigger name="calendar" href={'/calendar' as Href} asChild>
             <TabButton>Kalender</TabButton>
           </TabTrigger>
-          <TabTrigger name="favorites" href={'/favorites' as Href} asChild>
-            <TabButton>Favoriten</TabButton>
-          </TabTrigger>
-          <TabTrigger name="route" href={'/route' as Href} asChild>
-            <TabButton>Route</TabButton>
-          </TabTrigger>
           <TabTrigger name="profile" href={'/profile' as Href} asChild>
             <TabButton>Profil</TabButton>
           </TabTrigger>

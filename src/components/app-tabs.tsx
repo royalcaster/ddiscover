@@ -24,19 +24,6 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="favorites">
-        <NativeTabs.Trigger.Label>Favoriten</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'heart', selected: 'heart.fill' }}
-          md="favorite_border"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="route">
-        <NativeTabs.Trigger.Label>Route</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'location', selected: 'location.fill' }} md="route" />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Label>Profil</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
