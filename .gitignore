@@ -25,6 +25,17 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+
+# local editor and agent state
+.vscode/
+.agents/skills/
+.claude/skills/
+
+# local screenshots/debug captures
+/ddiscover-screen*.png
+/emulator-screen.png
+/image.png
 
 # macOS
 .DS_Store
