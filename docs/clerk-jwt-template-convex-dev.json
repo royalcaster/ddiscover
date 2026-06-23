@@ -1,0 +1,9 @@
+{
+  "name": "convex",
+  "claims": {
+    "aud": "convex"
+  },
+  "lifetime": 3600,
+  "allowed_clock_skew": 5,
+  "custom_signing_key": false
+}

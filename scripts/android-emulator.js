@@ -9,6 +9,7 @@ const sdkRoot = tooling.sdkRoot;
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
 const avdHome = process.env.ANDROID_AVD_HOME || path.join(process.env.USERPROFILE || '', '.android', 'avd');
 const defaultAvdName = process.env.DDISCOVER_ANDROID_AVD || 'ddiscover_dev_device';
+const defaultEmulatorArgs = ['-no-boot-anim', '-no-audio', '-no-snapshot-save', '-gpu', 'host'];
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -35,6 +36,14 @@ function getRunningEmulators() {
     .map((device) => device.serial);
 }
 
+function getEmulatorArgs() {
+  const extraArgs = process.env.DDISCOVER_ANDROID_EMULATOR_ARGS
+    ? process.env.DDISCOVER_ANDROID_EMULATOR_ARGS.split(/\s+/).filter(Boolean)
+    : [];
+
+  return [...defaultEmulatorArgs, ...extraArgs];
+}
+
 function listAvds() {
   const avds = getInstalledAvds();
   if (avds.length === 0) {
@@ -49,6 +58,12 @@ function listAvds() {
 
 function startAvd(avdName) {
   requireFile(emulatorPath, 'Android emulator');
+
+  const running = getRunningEmulators();
+  if (running.length > 0) {
+    console.log(`Using running emulator: ${running[0]}`);
+    return;
+  }
 
   const installedAvds = getInstalledAvds();
   const targetAvd =
@@ -66,16 +81,17 @@ function startAvd(avdName) {
     process.exit(1);
   }
 
-  spawn(emulatorPath, ['-avd', targetAvd], {
+  const emulatorArgs = ['-avd', targetAvd, ...getEmulatorArgs()];
+  spawn(emulatorPath, emulatorArgs, {
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'ignore', 'inherit'],
     env: {
       ...process.env,
       ANDROID_AVD_HOME: avdHome,
     },
   }).unref();
 
-  console.log(`Started emulator: ${targetAvd}`);
+  console.log(`Started emulator: ${targetAvd} ${getEmulatorArgs().join(' ')}`);
 }
 
 function reverseMetro() {

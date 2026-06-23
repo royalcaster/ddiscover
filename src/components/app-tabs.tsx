@@ -1,19 +1,30 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import React from 'react';
 
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/providers/theme-provider';
 
 export default function AppTabs() {
-  const colors = useTheme();
+  const { colors, resolvedTheme } = useAppTheme();
+  const activeItemColor = colors.primaryForeground;
+  const inactiveItemColor = colors.mutedForeground;
 
   return (
     <NativeTabs
+      key={resolvedTheme}
       backgroundColor={colors.background}
+      iconColor={{ default: inactiveItemColor, selected: activeItemColor }}
       indicatorColor={colors.primary}
-      labelStyle={{ selected: { color: colors.foreground } }}>
+      labelStyle={{
+        default: { color: inactiveItemColor },
+        selected: { color: colors.foreground },
+      }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Entdecken</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'map', selected: 'map.fill' }} md="explore" />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'map', selected: 'map.fill' }}
+          md="explore"
+          selectedColor={activeItemColor}
+        />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="calendar">
@@ -21,6 +32,7 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon
           sf={{ default: 'calendar', selected: 'calendar' }}
           md="calendar_today"
+          selectedColor={activeItemColor}
         />
       </NativeTabs.Trigger>
 
@@ -29,6 +41,7 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon
           sf={{ default: 'person', selected: 'person.fill' }}
           md="person_outline"
+          selectedColor={activeItemColor}
         />
       </NativeTabs.Trigger>
     </NativeTabs>

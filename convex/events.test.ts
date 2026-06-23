@@ -121,4 +121,70 @@ describe('events', () => {
       longitude: 13.73876,
     });
   });
+
+  test('does not overwrite existing MVP club rows during event import', async () => {
+    const t = convexTest(schema, modules);
+    const reviewedLatitude = 51.0319016;
+    const reviewedLongitude = 13.7307345;
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('clubs', {
+        name: 'Club 11',
+        slug: 'club-11',
+        websiteUrl: 'https://clubelf.de',
+        addressLine: 'Hochschulstrasse 48',
+        postalCode: '01069',
+        city: 'Dresden',
+        latitude: reviewedLatitude,
+        longitude: reviewedLongitude,
+        source: 'manual-mvp',
+      });
+    });
+
+    await t.mutation(internal.events.upsertScrapedVdscEvents, {
+      events: [
+        {
+          clubName: 'Club 11 e. V.',
+          locationName: 'Club 11 e. V.',
+          rawLocation: 'Club 11 e. V.\nHochschulstraße 48\n01069 Dresden',
+          addressLine: 'Wrong imported address',
+          postalCode: '01069',
+          city: 'Dresden',
+          dayText: '2026-06-12',
+          timeText: '20:00',
+          title: 'Springbreak',
+          startsAt: new Date(2026, 5, 12, 20, 0).getTime(),
+          latitude: 51.0463,
+          longitude: 13.7412,
+          source: 'vdsc' as const,
+          sourceKey: 'springbreak-club-11',
+          sourceUrl: 'https://clubelf.de/kalender/',
+        },
+      ],
+      scrapedAt: 3,
+    });
+
+    const clubs = await t.query(api.clubs.list, {
+      now: new Date(2026, 5, 12, 19, 0).getTime(),
+      limit: 10,
+    });
+    const events = await t.query(api.events.listUpcoming, {
+      now: new Date(2026, 5, 12, 19, 0).getTime(),
+      limit: 10,
+    });
+
+    expect(clubs[0]).toMatchObject({
+      name: 'Club 11',
+      slug: 'club-11',
+      source: 'manual-mvp',
+      addressLine: 'Hochschulstrasse 48',
+      latitude: reviewedLatitude,
+      longitude: reviewedLongitude,
+    });
+    expect(events[0]).toMatchObject({
+      title: 'Springbreak',
+      latitude: reviewedLatitude,
+      longitude: reviewedLongitude,
+    });
+  });
 });

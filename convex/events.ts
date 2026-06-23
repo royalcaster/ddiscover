@@ -21,6 +21,24 @@ export const listUpcoming = query({
   },
 });
 
+export const getById = query({
+  args: {
+    eventId: v.id('events'),
+  },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      return null;
+    }
+
+    const club = await ctx.db.get(event.clubId);
+    return {
+      event,
+      club,
+    };
+  },
+});
+
 export const upsertScrapedVdscEvents = internalMutation({
   args: {
     events: v.array(scrapedVdscEventValidator),
@@ -52,20 +70,6 @@ export const upsertScrapedVdscEvents = internalMutation({
           lastScrapedAt: args.scrapedAt,
         }));
 
-      if (existingClub) {
-        await ctx.db.patch(existingClub._id, {
-          name: clubProfile.name,
-          source: event.source,
-          websiteUrl: existingClub.websiteUrl ?? clubProfile.websiteUrl,
-          addressLine: event.addressLine ?? existingClub.addressLine,
-          postalCode: event.postalCode ?? existingClub.postalCode,
-          city: event.city ?? existingClub.city,
-          latitude: existingClub.latitude ?? event.latitude,
-          longitude: existingClub.longitude ?? event.longitude,
-          lastScrapedAt: args.scrapedAt,
-        });
-      }
-
       const existingEvent = await ctx.db
         .query('events')
         .withIndex('by_source_and_source_key', (q) =>
@@ -78,8 +82,8 @@ export const upsertScrapedVdscEvents = internalMutation({
         title: event.title,
         startsAt: event.startsAt,
         locationName: event.locationName,
-        latitude: event.latitude ?? existingEvent?.latitude,
-        longitude: event.longitude ?? existingEvent?.longitude,
+        latitude: existingClub?.latitude ?? event.latitude ?? existingEvent?.latitude,
+        longitude: existingClub?.longitude ?? event.longitude ?? existingEvent?.longitude,
         source: event.source,
         sourceKey: event.sourceKey,
         sourceUrl: event.sourceUrl,

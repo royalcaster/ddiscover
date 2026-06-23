@@ -33,9 +33,14 @@ export const list = query({
 
 export const cleanupOrphaned = internalMutation({
   args: {
+    allowMvpClubChanges: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    if (args.allowMvpClubChanges !== true) {
+      return { scanned: 0, deleted: 0, skipped: true };
+    }
+
     const limit = args.limit ?? 100;
     const clubs = await ctx.db.query('clubs').take(limit);
     let deleted = 0;
@@ -58,9 +63,14 @@ export const cleanupOrphaned = internalMutation({
 
 export const mergeLegacyDuplicates = internalMutation({
   args: {
+    allowMvpClubChanges: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    if (args.allowMvpClubChanges !== true) {
+      return { scanned: 0, merged: 0, renamed: 0, skipped: true };
+    }
+
     const limit = args.limit ?? 100;
     const clubs = await ctx.db.query('clubs').take(limit);
     let merged = 0;

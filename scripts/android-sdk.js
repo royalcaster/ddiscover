@@ -30,7 +30,10 @@ function ensureAndroidSdkConfig(projectRoot) {
   const contents = `sdk.dir=${escapedSdkDir}\n`;
 
   if (!fs.existsSync(androidDir)) {
-    throw new Error(`Android directory not found: ${androidDir}`);
+    throw new Error(
+      `Android directory not found: ${androidDir}\n` +
+        'Run "npx expo prebuild --platform android" once from the repository root, then retry.',
+    );
   }
 
   if (!fs.existsSync(localPropertiesPath) || fs.readFileSync(localPropertiesPath, 'utf8') !== contents) {

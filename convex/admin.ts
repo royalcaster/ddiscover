@@ -1,3 +1,5 @@
+import { v } from 'convex/values';
+
 import { internalMutation, type MutationCtx } from './_generated/server';
 
 async function deleteAllFromTable(
@@ -21,16 +23,19 @@ async function deleteAllFromTable(
 }
 
 export const wipeAllData = internalMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    includeClubs: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
     const deletedEvents = await deleteAllFromTable(ctx, 'events');
-    const deletedClubs = await deleteAllFromTable(ctx, 'clubs');
+    const deletedClubs = args.includeClubs === true ? await deleteAllFromTable(ctx, 'clubs') : 0;
     const deletedGeocodingCache = await deleteAllFromTable(ctx, 'geocodingCache');
     const deletedFavorites = await deleteAllFromTable(ctx, 'favorites');
 
     return {
       deletedEvents,
       deletedClubs,
+      skippedClubs: args.includeClubs !== true,
       deletedGeocodingCache,
       deletedFavorites,
     };

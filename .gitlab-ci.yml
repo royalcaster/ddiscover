@@ -1,0 +1,33 @@
+stages:
+  - build
+
+android_apk:
+  stage: build
+  image: reactnativecommunity/react-native-android:latest
+  when: manual
+  timeout: 45m
+  variables:
+    CI: "true"
+    EXPO_NO_TELEMETRY: "1"
+    GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  cache:
+    key: "$CI_COMMIT_REF_SLUG"
+    paths:
+      - .npm/
+      - .gradle/caches/
+      - .gradle/wrapper/
+  before_script:
+    - node --version
+    - npm --version
+    - java -version
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npx expo prebuild --platform android --no-install
+    - cd android
+    - chmod +x ./gradlew
+    - ./gradlew assembleRelease --no-daemon
+  artifacts:
+    name: ddiscover-android-apk-$CI_COMMIT_SHORT_SHA
+    paths:
+      - android/app/build/outputs/apk/release/app-release.apk
+    expire_in: 14 days

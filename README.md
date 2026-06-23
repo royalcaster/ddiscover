@@ -32,9 +32,13 @@
 ### Local Development
 
 - Install dependencies once with `npm install`.
-- Copy `.env.example` to `.env.local` and fill in the local keys. Android map builds need `GOOGLE_MAPS_ANDROID_API_KEY` or `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`; Google sign-in testing also needs the Clerk Google web and Android client IDs.
+- Copy `.env.example` to `.env.local` and fill in the local keys. Google sign-in testing needs the Clerk Google web and Android client IDs; the MapLibre discover map does not need a Google Maps API key.
+- Fresh clones must generate the ignored native Android project once with `npx expo prebuild --platform android`.
 - Start Convex in one terminal and keep it running: `npx convex dev`.
 - Start Android app development in a second terminal: `npm run android:dev`. This starts or reuses the default emulator, applies `adb reverse`, builds/installs the dev client, and starts Metro through Expo.
+- The default emulator scripts launch with host GPU acceleration, no boot animation, no audio, and no quickboot snapshot saving to keep the Android dev loop lighter and avoid stale snapshot bloat.
+- To test on a physical Android phone without Expo Go, run the manual GitLab CI `android_apk` job or the GitHub `Build Android APK` workflow and install the downloaded APK artifact. See `docs/android-device-testing.md`.
+- Rerun `npx expo prebuild --platform android` after native Expo config/plugin changes. Avoid `--clean` unless you intentionally want to regenerate local native files from scratch.
 - If the dev client is already installed and the emulator/device is already running, start only the Expo dev-client server with `npm run dev`.
 - For web-only checks, run `npm run web` while Convex is running.
 - Run backend and parser tests with `npm test`.

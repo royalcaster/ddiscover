@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/providers/theme-provider';
 
 const options = [
-  { value: 'system', icon: MonitorSmartphone, label: 'System' },
+  { value: 'system', icon: MonitorSmartphone, label: 'Auto' },
   { value: 'light', icon: SunMedium, label: 'Light' },
   { value: 'dark', icon: MoonStar, label: 'Dark' },
 ] as const;
@@ -26,11 +26,11 @@ export function ThemeModeToggle() {
             key={option.value}
             size="sm"
             variant={isActive ? 'default' : 'ghost'}
-            className="min-w-[72px] border-transparent"
+            className="flex-1 border-transparent"
             onPress={() => {
               void setPreference(option.value);
             }}>
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center justify-center gap-2">
               <Icon
                 size={15}
                 color={isActive ? colors.primaryForeground : colors.mutedForeground}

@@ -12,27 +12,9 @@ export function GoogleSignInButton() {
   const { startSSOFlow } = useSSO();
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [debugMessage, setDebugMessage] = React.useState<string | null>(null);
-
-  const summarizeResult = (result: Awaited<ReturnType<typeof startSSOFlow>>) => {
-    const signInStatus = result.signIn?.status ?? null;
-    const signUpStatus = result.signUp?.status ?? null;
-    const signInVerificationStatus = result.signIn?.firstFactorVerification?.status ?? null;
-
-    return {
-      createdSessionId: result.createdSessionId ?? null,
-      signInCreatedSessionId: result.signIn?.createdSessionId ?? null,
-      signUpCreatedSessionId: result.signUp?.createdSessionId ?? null,
-      hasSetActive: Boolean(result.setActive),
-      signInStatus,
-      signUpStatus,
-      signInVerificationStatus,
-    };
-  };
 
   const handlePress = async () => {
     setErrorMessage(null);
-    setDebugMessage(null);
     setIsLoading(true);
 
     try {
@@ -40,9 +22,6 @@ export function GoogleSignInButton() {
         strategy: 'oauth_google',
         redirectUrl: AuthSession.makeRedirectUri({ path: 'sso-callback' }),
       });
-      const summary = summarizeResult(result);
-      console.log('[GoogleSignInButton][web] Clerk result:', summary);
-
       const sessionId =
         result.createdSessionId ??
         result.signIn?.createdSessionId ??
@@ -50,26 +29,12 @@ export function GoogleSignInButton() {
         null;
 
       if (sessionId && result.setActive) {
-        console.log('[GoogleSignInButton][web] Activating session:', sessionId);
         await result.setActive({ session: sessionId });
-        return;
+      } else {
+        setErrorMessage('Google sign-in did not create a Clerk session.');
       }
-
-      const signInStatus = result.signIn?.status;
-      const signUpStatus = result.signUp?.status;
-      const statusLabel = [signInStatus, signUpStatus].filter(Boolean).join(' / ');
-      const compactDebug = `debug: signin=${signInStatus ?? 'n/a'}, signup=${signUpStatus ?? 'n/a'}, verification=${result.signIn?.firstFactorVerification?.status ?? 'n/a'}`;
-      setDebugMessage(compactDebug);
-
-      setErrorMessage(
-        statusLabel
-          ? `Google flow incomplete (${statusLabel}). Continue in the form below.`
-          : 'No Clerk session was created. Continue in the form below.',
-      );
     } catch (error) {
-      console.error('[GoogleSignInButton][web] Flow error:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Google sign-in failed.');
-      setDebugMessage(null);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +44,7 @@ export function GoogleSignInButton() {
     <View className="gap-2">
       <Button
         variant="outline"
-        className="h-11 rounded-full border-border bg-background"
+        className="h-12 rounded-full border-border bg-background"
         onPress={() => void handlePress()}
         disabled={isLoading}>
         {isLoading ? (
@@ -92,12 +57,7 @@ export function GoogleSignInButton() {
         <Text>Mit Google fortfahren</Text>
       </Button>
 
-      {errorMessage ? (
-        <Text className="text-destructive text-xs">{errorMessage}</Text>
-      ) : null}
-      {debugMessage ? (
-        <Text className="text-muted-foreground text-[11px]">{debugMessage}</Text>
-      ) : null}
+      {errorMessage ? <Text className="text-destructive text-xs">{errorMessage}</Text> : null}
     </View>
   );
 }

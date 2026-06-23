@@ -10,6 +10,7 @@ const tooling = createAndroidAdbTooling(projectRoot);
 const emulatorPath = path.join(sdkRoot, 'emulator', 'emulator.exe');
 const defaultAvdName = process.env.DDISCOVER_ANDROID_AVD || 'ddiscover_dev_device';
 const devServerPort = Number(process.env.EXPO_DEV_SERVER_PORT || 8081);
+const defaultEmulatorArgs = ['-no-boot-anim', '-no-audio', '-no-snapshot-save', '-gpu', 'host'];
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -35,6 +36,14 @@ function getInstalledAvds() {
 
 function adb(args, options = {}) {
   return runAdb(tooling, args, options);
+}
+
+function getEmulatorArgs() {
+  const extraArgs = process.env.DDISCOVER_ANDROID_EMULATOR_ARGS
+    ? process.env.DDISCOVER_ANDROID_EMULATOR_ARGS.split(/\s+/).filter(Boolean)
+    : [];
+
+  return [...defaultEmulatorArgs, ...extraArgs];
 }
 
 function listAdbDevices() {
@@ -67,16 +76,17 @@ function startAvdIfNeeded(avdName) {
     process.exit(1);
   }
 
-  spawn(emulatorPath, ['-avd', targetAvd], {
+  const emulatorArgs = ['-avd', targetAvd, ...getEmulatorArgs()];
+  spawn(emulatorPath, emulatorArgs, {
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'ignore', 'inherit'],
     env: {
       ...process.env,
       ANDROID_AVD_HOME: avdHome,
     },
   }).unref();
 
-  console.log(`Started emulator: ${targetAvd}`);
+  console.log(`Started emulator: ${targetAvd} ${getEmulatorArgs().join(' ')}`);
 }
 
 async function waitForEmulator() {
@@ -145,15 +155,24 @@ function enableReverse(device) {
 function ensurePortIsFree(port) {
   try {
     if (process.platform === 'win32') {
-      const output = execSync(
-        `powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique"`,
-        { encoding: 'utf8' },
-      )
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
+      const output = execSync(`netstat -ano -p tcp | findstr ":${port}"`, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const pids = new Set();
 
-      for (const pid of output) {
+      for (const line of output.split(/\r?\n/)) {
+        const columns = line.trim().split(/\s+/);
+        const localAddress = columns[1] || '';
+        const state = columns[3] || '';
+        const pid = columns[4] || '';
+
+        if (localAddress.endsWith(`:${port}`) && state === 'LISTENING' && pid) {
+          pids.add(pid);
+        }
+      }
+
+      for (const pid of pids) {
         execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
         console.log(`Freed port ${port} by stopping PID ${pid}.`);
       }

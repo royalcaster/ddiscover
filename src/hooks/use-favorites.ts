@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/expo';
-import { useMutation, useQuery } from 'convex/react';
+import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -21,6 +21,7 @@ type ToggleFavoriteArgs =
 export function useFavorites() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const convexAuth = useConvexAuth();
   const favorites = useQuery(api.favorites.listMyFavorites, {});
   const toggleFavorite = useMutation(api.favorites.toggleFavorite);
 
@@ -44,16 +45,47 @@ export function useFavorites() {
       return null;
     }
 
-    if (args.entityType === 'club') {
-      return await toggleFavorite({ entityType: 'club', clubId: args.clubId });
+    if (convexAuth.isLoading) {
+      Alert.alert(
+        'Bitte kurz warten',
+        'Deine Anmeldung wird noch vorbereitet. Versuche es gleich erneut.',
+      );
+      return null;
     }
 
-    return await toggleFavorite({ entityType: 'event', eventId: args.eventId });
+    if (!convexAuth.isAuthenticated) {
+      if (__DEV__) {
+        console.warn('[useFavorites] Clerk signed in but Convex auth is not authenticated.');
+      }
+      Alert.alert(
+        'Speichern noch nicht moeglich',
+        'Bitte oeffne dein Profil und melde dich erneut an.',
+      );
+      return null;
+    }
+
+    try {
+      if (args.entityType === 'club') {
+        return await toggleFavorite({ entityType: 'club', clubId: args.clubId });
+      }
+
+      return await toggleFavorite({ entityType: 'event', eventId: args.eventId });
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[useFavorites] toggleFavorite failed:', error);
+      }
+      Alert.alert(
+        'Speichern fehlgeschlagen',
+        'Favorit konnte nicht gespeichert werden. Bitte versuche es spaeter erneut.',
+      );
+      return null;
+    }
   };
 
   return {
     isSignedIn: Boolean(isSignedIn),
-    isLoading: favorites === undefined,
+    isConvexAuthenticated: convexAuth.isAuthenticated,
+    isLoading: favorites === undefined || convexAuth.isLoading,
     clubIds,
     eventIds,
     isClubFavorited,

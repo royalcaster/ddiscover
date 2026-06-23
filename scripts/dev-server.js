@@ -18,20 +18,29 @@ function startExpoDevClient() {
 function stopMetroOnPort(port) {
   try {
     if (process.platform === 'win32') {
-      const output = execSync(
-        `powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique"`,
-        { encoding: 'utf8' },
-      )
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
+      const output = execSync(`netstat -ano -p tcp | findstr ":${port}"`, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const pids = new Set();
 
-      if (output.length === 0) {
+      for (const line of output.split(/\r?\n/)) {
+        const columns = line.trim().split(/\s+/);
+        const localAddress = columns[1] || '';
+        const state = columns[3] || '';
+        const pid = columns[4] || '';
+
+        if (localAddress.endsWith(`:${port}`) && state === 'LISTENING' && pid) {
+          pids.add(pid);
+        }
+      }
+
+      if (pids.size === 0) {
         console.log(`No process is listening on port ${port}.`);
         return;
       }
 
-      for (const pid of output) {
+      for (const pid of pids) {
         execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
         console.log(`Stopped process on port ${port}: PID ${pid}`);
       }

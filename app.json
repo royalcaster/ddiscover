@@ -38,7 +38,13 @@
       ],
       "@clerk/expo",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "DDDiscover nutzt deinen Standort, um die Karte auf deine Position zu zentrieren."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

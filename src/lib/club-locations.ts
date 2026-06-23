@@ -3,12 +3,54 @@ const DRESDEN_CENTER = {
   longitude: 13.7373,
 };
 
-const KNOWN_CLUB_COORDINATES: Record<string, { latitude: number; longitude: number }> = {
-  'club-aquarium': { latitude: 51.0448, longitude: 13.7446 },
-  'club-haengemathe': { latitude: 51.0284, longitude: 13.7265 },
-  'club-countdown': { latitude: 51.0289, longitude: 13.7292 },
-  'club-11': { latitude: 51.0463, longitude: 13.7412 },
-  'club-wu5': { latitude: 51.0625, longitude: 13.7524 },
+type MvpClubLocation = {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  reviewStatus: 'verified' | 'needs-review';
+};
+
+/**
+ * Fixed MVP fallback registry. The Convex clubs table is the preferred MVP
+ * source once a reviewed club row has latitude and longitude.
+ */
+const MVP_CLUB_LOCATIONS: Record<string, MvpClubLocation> = {
+  'club-11': {
+    name: 'Club 11',
+    address: 'Hochschulstrasse 48, 01069 Dresden',
+    latitude: 51.0319016,
+    longitude: 13.7307345,
+    reviewStatus: 'verified',
+  },
+  'club-aquarium': {
+    name: 'Club Aquarium',
+    address: 'St. Petersburger Strasse 21, 01069 Dresden',
+    latitude: 51.044806,
+    longitude: 13.739937,
+    reviewStatus: 'needs-review',
+  },
+  'club-haengemathe': {
+    name: 'Club HaengeMathe',
+    address: 'Zeunerstrasse 1f, 01069 Dresden',
+    latitude: 51.026865,
+    longitude: 13.736716,
+    reviewStatus: 'needs-review',
+  },
+  countdown: {
+    name: 'CountDown',
+    address: 'Guentzstrasse 22, 01069 Dresden',
+    latitude: 51.048418,
+    longitude: 13.756782,
+    reviewStatus: 'needs-review',
+  },
+  wu5: {
+    name: 'Wu5',
+    address: 'August-Bebel-Strasse 12, 01219 Dresden',
+    latitude: 51.032329,
+    longitude: 13.751618,
+    reviewStatus: 'needs-review',
+  },
 };
 
 function deterministicOffset(seed: string) {
@@ -30,9 +72,12 @@ export function resolveClubCoordinates(
     return { latitude, longitude };
   }
 
-  const known = KNOWN_CLUB_COORDINATES[slug];
-  if (known) {
-    return known;
+  const fixedLocation = MVP_CLUB_LOCATIONS[slug];
+  if (fixedLocation) {
+    return {
+      latitude: fixedLocation.latitude,
+      longitude: fixedLocation.longitude,
+    };
   }
 
   const { latOffset, lngOffset } = deterministicOffset(slug);
@@ -42,4 +87,4 @@ export function resolveClubCoordinates(
   };
 }
 
-export { DRESDEN_CENTER };
+export { DRESDEN_CENTER, MVP_CLUB_LOCATIONS };

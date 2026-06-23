@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as clubs from "../clubs.js";
+import type * as dvb from "../dvb.js";
 import type * as events from "../events.js";
 import type * as favorites from "../favorites.js";
 import type * as geocoding from "../geocoding.js";
@@ -28,6 +29,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   clubs: typeof clubs;
+  dvb: typeof dvb;
   events: typeof events;
   favorites: typeof favorites;
   geocoding: typeof geocoding;
