@@ -16,9 +16,9 @@ export function GoogleSignInButton() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
-  const webClientId = process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID ?? extra.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID;
+  const webClientId = process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID || extra.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID;
   const androidClientId =
-    process.env.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID ??
+    process.env.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID ||
     extra.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID;
 
   const activateSession = async (
