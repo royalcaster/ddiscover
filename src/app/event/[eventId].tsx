@@ -1,5 +1,5 @@
 import type { Id } from '../../../convex/_generated/dataModel';
-import { useAction, useQuery } from 'convex/react';
+import { useAction } from 'convex/react';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CalendarClock, ExternalLink, Globe2, Heart, MapPin, Music2, Navigation, Route, Share2 } from 'lucide-react-native';
@@ -11,6 +11,7 @@ import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useFavorites } from '@/hooks/use-favorites';
+import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 
 const EVENT_HERO = require('../../../assets/images/logo-glow.png');
@@ -235,7 +236,8 @@ export default function EventDetailScreen() {
   const favorites = useFavorites();
   const params = useLocalSearchParams<{ eventId?: string | string[] }>();
   const eventId = getParamValue(params.eventId) as Id<'events'> | undefined;
-  const detail = useQuery(api.events.getById, eventId ? { eventId } : 'skip');
+  const detailQuery = usePublicConvexQuery(api.events.getById, eventId ? { eventId } : null);
+  const detail = detailQuery.data;
   const event = detail?.event;
   const club = detail?.club;
   const favorited = event ? favorites.isEventFavorited(event._id) : false;
@@ -278,14 +280,18 @@ export default function EventDetailScreen() {
           </View>
         </View>
 
-        {detail === undefined ? (
+        {detailQuery.isLoading ? (
           <View className="mx-auto w-full max-w-[560px] px-4 py-6">
             <Text className="text-muted-foreground text-sm">Event wird geladen...</Text>
           </View>
-        ) : !event ? (
+        ) : detailQuery.error || !event ? (
           <View className="mx-auto w-full max-w-[560px] gap-3 px-4 py-6">
             <Text className="text-xl font-semibold">Event nicht gefunden</Text>
-            <Text className="text-muted-foreground text-sm">Dieses Event ist nicht mehr verfuegbar.</Text>
+            <Text className="text-muted-foreground text-sm">
+              {detailQuery.error
+                ? `Convex konnte nicht geladen werden: ${detailQuery.error.message}`
+                : 'Dieses Event ist nicht mehr verfuegbar.'}
+            </Text>
           </View>
         ) : (
           <View className="mx-auto -mt-6 w-full max-w-[560px] gap-4 px-4">

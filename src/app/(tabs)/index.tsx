@@ -1,5 +1,4 @@
 import type { Id } from '../../../convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
 import * as Location from 'expo-location';
 import React from 'react';
 import { Alert, Linking, View } from 'react-native';
@@ -9,6 +8,7 @@ import { api } from '../../../convex/_generated/api';
 import { DiscoverBottomSheet } from '@/components/discover-bottom-sheet';
 import { DiscoverMap } from '@/components/discover-map';
 import { useFavorites } from '@/hooks/use-favorites';
+import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { resolveClubCoordinates, DRESDEN_CENTER } from '@/lib/club-locations';
 import type { MapRegion } from '@/lib/map-types';
 import { openEventDetail } from '@/lib/navigation';
@@ -39,10 +39,10 @@ function toLocalDayKey(timestamp: number) {
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
-  const clubsQuery = useQuery(api.clubs.list, { limit: 72 });
-  const eventsQuery = useQuery(api.events.listUpcoming, { limit: 120 });
-  const clubs = React.useMemo(() => clubsQuery ?? [], [clubsQuery]);
-  const events = React.useMemo(() => eventsQuery ?? [], [eventsQuery]);
+  const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
+  const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
+  const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
+  const events = React.useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   const favorites = useFavorites();
 
   const [, setRegion] = React.useState(INITIAL_REGION);
@@ -169,6 +169,8 @@ export default function DiscoverScreen() {
       <DiscoverBottomSheet
         selectedClub={selectedClub}
         events={selectedClubEvents}
+        isLoading={clubsQuery.isLoading || eventsQuery.isLoading}
+        errorMessage={clubsQuery.error?.message ?? eventsQuery.error?.message ?? null}
         bottomInset={Math.max(insets.bottom, 8)}
         isClubFavorited={favorites.isClubFavorited}
         isEventFavorited={favorites.isEventFavorited}

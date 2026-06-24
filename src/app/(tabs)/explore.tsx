@@ -1,5 +1,4 @@
 import { Building2, CalendarClock, Globe2, MapPinHouse, MapPinned } from 'lucide-react-native';
-import { useQuery } from 'convex/react';
 import { Linking, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { openEventDetail } from '@/lib/navigation';
 
@@ -31,7 +31,8 @@ function formatAddress(addressLine?: string, postalCode?: string, city?: string)
 
 export default function ClubsScreen() {
   const theme = useTheme();
-  const clubs = useQuery(api.clubs.list, { limit: 24 });
+  const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 24 });
+  const clubs = clubsQuery.data;
 
   const clubsWithUpcomingEvent = clubs?.filter((club) => club.nextEvent !== null).length ?? 0;
 
@@ -74,15 +75,22 @@ export default function ClubsScreen() {
           </View>
         </View>
 
-        {clubs === undefined ? (
+        {clubsQuery.isLoading ? (
           <Card>
             <CardContent className="pt-4">
               <Text variant="h4">Loading clubs</Text>
               <Text variant="muted">Waiting for Convex to return the normalized club list.</Text>
             </CardContent>
           </Card>
+        ) : clubsQuery.error ? (
+          <Card>
+            <CardContent className="pt-4">
+              <Text variant="h4">Convex request failed</Text>
+              <Text variant="muted">{clubsQuery.error.message}</Text>
+            </CardContent>
+          </Card>
         ) : (
-          clubs.map((club) => {
+          (clubs ?? []).map((club) => {
             const address = formatAddress(club.addressLine, club.postalCode, club.city);
 
             return (

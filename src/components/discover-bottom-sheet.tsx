@@ -38,6 +38,8 @@ type DiscoverSheetEvent = {
 type DiscoverBottomSheetProps = {
   selectedClub: DiscoverSheetClub | null;
   events: DiscoverSheetEvent[];
+  isLoading?: boolean;
+  errorMessage?: string | null;
   bottomInset: number;
   isClubFavorited: (clubId: Id<'clubs'>) => boolean;
   isEventFavorited: (eventId: Id<'events'>) => boolean;
@@ -60,6 +62,8 @@ function formatDateTime(timestamp: number) {
 export function DiscoverBottomSheet({
   selectedClub,
   events,
+  isLoading = false,
+  errorMessage = null,
   bottomInset,
   isClubFavorited,
   isEventFavorited,
@@ -328,9 +332,13 @@ export function DiscoverBottomSheet({
         </ScrollView>
       ) : (
         <View className="gap-2 px-5 pb-8">
-          <Text className="text-lg font-semibold text-foreground">Keine Clubs verfuegbar</Text>
+          <Text className="text-lg font-semibold text-foreground">
+            {isLoading ? 'Clubs werden geladen...' : 'Keine Clubs verfuegbar'}
+          </Text>
           <Text className="text-muted-foreground text-sm">
-            Sobald Clubs geladen sind, erscheint hier die Club- und Eventuebersicht.
+            {errorMessage
+              ? `Convex konnte nicht geladen werden: ${errorMessage}`
+              : 'Sobald Clubs geladen sind, erscheint hier die Club- und Eventuebersicht.'}
           </Text>
         </View>
       )}

@@ -1,7 +1,4 @@
-import Constants from 'expo-constants';
+import { publicClerkPublishableKey } from '@/lib/public-config';
 
-const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
-
-export const clerkPublishableKey =
-  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || extra.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+export const clerkPublishableKey = publicClerkPublishableKey;
 export const clerkEnabled = Boolean(clerkPublishableKey);

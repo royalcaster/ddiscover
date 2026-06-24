@@ -1,4 +1,3 @@
-import { useQuery } from 'convex/react';
 import { Image } from 'expo-image';
 import { Heart, Music2 } from 'lucide-react-native';
 import React from 'react';
@@ -8,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../../convex/_generated/api';
 import { Text } from '@/components/ui/text';
 import { useFavorites } from '@/hooks/use-favorites';
+import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { openEventDetail } from '@/lib/navigation';
 
@@ -58,10 +58,10 @@ function inferGenre(title: string) {
 
 export default function CalendarScreen() {
   const theme = useTheme();
-  const eventsQuery = useQuery(api.events.listUpcoming, { limit: 96 });
-  const clubsQuery = useQuery(api.clubs.list, { limit: 72 });
-  const events = React.useMemo(() => eventsQuery ?? [], [eventsQuery]);
-  const clubs = React.useMemo(() => clubsQuery ?? [], [clubsQuery]);
+  const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 96 });
+  const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
+  const events = React.useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
+  const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
   const favorites = useFavorites();
   const [activeDay, setActiveDay] = React.useState<string | null>(null);
 
@@ -119,9 +119,15 @@ export default function CalendarScreen() {
         </View>
 
         <View className="overflow-hidden rounded-[14px] border border-border bg-card">
-          {eventsQuery === undefined ? (
+          {eventsQuery.isLoading || clubsQuery.isLoading ? (
             <View className="px-4 py-6">
               <Text className="text-muted-foreground text-sm">Events werden geladen...</Text>
+            </View>
+          ) : eventsQuery.error || clubsQuery.error ? (
+            <View className="px-4 py-6">
+              <Text className="text-destructive text-sm">
+                Convex konnte nicht geladen werden: {eventsQuery.error?.message ?? clubsQuery.error?.message}
+              </Text>
             </View>
           ) : filteredEvents.length === 0 ? (
             <View className="px-4 py-6">

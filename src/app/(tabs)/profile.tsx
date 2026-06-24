@@ -1,6 +1,5 @@
 import { useIsFocused } from '@react-navigation/native';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
-import { useQuery } from 'convex/react';
 import { Image } from 'expo-image';
 import { ArrowLeft, Building2, CalendarClock, Heart, MoonStar, Settings, ShieldCheck } from 'lucide-react-native';
 import React from 'react';
@@ -15,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useFavorites } from '@/hooks/use-favorites';
+import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { clerkEnabled } from '@/lib/auth';
 import { openEventDetail } from '@/lib/navigation';
@@ -80,10 +80,10 @@ const styles = StyleSheet.create({
 function FavoritesSection() {
   const theme = useTheme();
   const favorites = useFavorites();
-  const clubsQuery = useQuery(api.clubs.list, { limit: 72 });
-  const eventsQuery = useQuery(api.events.listUpcoming, { limit: 120 });
-  const clubs = clubsQuery ?? [];
-  const events = eventsQuery ?? [];
+  const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
+  const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
+  const clubs = clubsQuery.data ?? [];
+  const events = eventsQuery.data ?? [];
 
   const favoriteClubs = React.useMemo(
     () => clubs.filter((club) => favorites.clubIds.has(club._id)),
@@ -94,7 +94,7 @@ function FavoritesSection() {
     [events, favorites.eventIds],
   );
   const favoriteCount = favoriteClubs.length + favoriteEvents.length;
-  const isLoading = favorites.isLoading || clubsQuery === undefined || eventsQuery === undefined;
+  const isLoading = favorites.isLoading || clubsQuery.isLoading || eventsQuery.isLoading;
 
   return (
     <Card className="rounded-[22px] py-0">
@@ -111,6 +111,10 @@ function FavoritesSection() {
 
         {isLoading ? (
           <Text className="text-muted-foreground text-sm">Favoriten werden geladen...</Text>
+        ) : clubsQuery.error || eventsQuery.error ? (
+          <Text className="text-destructive text-sm">
+            Convex konnte nicht geladen werden: {clubsQuery.error?.message ?? eventsQuery.error?.message}
+          </Text>
         ) : favoriteCount === 0 ? (
           <Text className="text-muted-foreground text-sm">
             Gespeicherte Clubs und Events erscheinen hier.
