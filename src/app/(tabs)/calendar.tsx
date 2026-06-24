@@ -101,6 +101,7 @@ export default function CalendarScreen() {
             return (
               <Pressable
                 key={day.key}
+                android_ripple={{ color: theme.secondary }}
                 className={
                   selected
                     ? 'min-h-[54px] min-w-[42px] items-center justify-center rounded-[12px] bg-primary px-2'
@@ -131,7 +132,7 @@ export default function CalendarScreen() {
             </View>
           ) : filteredEvents.length === 0 ? (
             <View className="px-4 py-6">
-              <Text className="text-muted-foreground text-sm">Keine Events fuer diesen Tag.</Text>
+              <Text className="text-muted-foreground text-sm">Keine Events für diesen Tag.</Text>
             </View>
           ) : (
             filteredEvents.map((event, index) => {
@@ -143,6 +144,7 @@ export default function CalendarScreen() {
               return (
                 <Pressable
                   key={event._id}
+                  android_ripple={{ color: theme.secondary }}
                   className={isLast ? 'flex-row gap-3 px-3 py-3' : 'flex-row gap-3 border-b border-border px-3 py-3'}
                   onPress={() => openEventDetail(event._id)}>
                   <View className="h-[76px] w-[76px] overflow-hidden rounded-[10px] bg-secondary">
@@ -151,7 +153,7 @@ export default function CalendarScreen() {
                       <View className="absolute inset-0 bg-black/10 dark:bg-black/20" />
                     ) : (
                       <View className="absolute inset-0 items-center justify-center bg-black/20 dark:bg-black/35">
-                        <Music2 size={20} color={theme.primary} />
+                        <Music2 size={20} color="#ffffff" />
                       </View>
                     )}
                   </View>
@@ -170,6 +172,7 @@ export default function CalendarScreen() {
                   </View>
 
                   <Pressable
+                    android_ripple={{ color: theme.secondary, borderless: true }}
                     className="h-10 w-10 items-center justify-center rounded-full"
                     onPress={(pressEvent) => {
                       pressEvent.stopPropagation();
@@ -177,8 +180,8 @@ export default function CalendarScreen() {
                     }}>
                     <Heart
                       size={19}
-                      color={favorited ? theme.primary : theme.mutedForeground}
-                      fill={favorited ? theme.primary : 'transparent'}
+                      color={favorited ? theme.foreground : theme.mutedForeground}
+                      fill={favorited ? theme.foreground : 'transparent'}
                     />
                   </Pressable>
                 </Pressable>

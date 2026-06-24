@@ -32,8 +32,8 @@ export function useFavorites() {
     }
 
     Alert.alert(
-      'Speichern noch nicht moeglich',
-      'Favoriten brauchen noch die Convex-Anbindung an Clerk. Clubs und Events bleiben trotzdem verfuegbar.',
+      'Speichern noch nicht möglich',
+      'Favoriten brauchen noch die Convex-Anbindung an Clerk. Clubs und Events bleiben trotzdem verfügbar.',
     );
     return null;
   };

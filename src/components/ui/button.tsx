@@ -1,5 +1,6 @@
 import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { useAppTheme } from '@/providers/theme-provider';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, Pressable } from 'react-native';
 
@@ -90,10 +91,14 @@ const buttonTextVariants = cva(
 
 type ButtonProps = React.ComponentProps<typeof Pressable> & VariantProps<typeof buttonVariants>;
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({ android_ripple, className, variant, size, ...props }: ButtonProps) {
+  const { resolvedTheme } = useAppTheme();
+  const defaultRippleColor = resolvedTheme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
+
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
+        android_ripple={android_ripple ?? { color: defaultRippleColor }}
         className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
         role="button"
         {...props}

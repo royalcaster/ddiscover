@@ -19,6 +19,8 @@ import { useAppTheme } from '@/providers/theme-provider';
 const COLLAPSED_CLUB_SUMMARY_HEIGHT = 122;
 const COLLAPSED_EMPTY_HEIGHT = 112;
 
+type SheetSnapState = 'collapsed' | 'half' | 'expanded';
+
 type DiscoverSheetClub = {
   _id: Id<'clubs'>;
   name: string;
@@ -74,27 +76,40 @@ export function DiscoverBottomSheet({
 }: DiscoverBottomSheetProps) {
   const { colors, resolvedTheme } = useAppTheme();
   const { height } = useWindowDimensions();
-  const maxSheetHeight = Math.min(height * 0.72, 620);
+  const maxSheetHeight = Math.min(height * 0.78, 680);
   const collapsedHeight = selectedClub
     ? Math.min(maxSheetHeight - 24, COLLAPSED_CLUB_SUMMARY_HEIGHT)
     : COLLAPSED_EMPTY_HEIGHT;
-  const collapsedTranslateY = Math.max(0, maxSheetHeight - collapsedHeight);
-  const translateY = React.useRef(new Animated.Value(collapsedTranslateY)).current;
-  const dragStartY = React.useRef(collapsedTranslateY);
-  const currentTranslateY = React.useRef(collapsedTranslateY);
+  const snapPoints = React.useMemo(
+    () => ({
+      expanded: 0,
+      half: Math.max(0, maxSheetHeight * 0.38),
+      collapsed: Math.max(0, maxSheetHeight - collapsedHeight),
+    }),
+    [collapsedHeight, maxSheetHeight],
+  );
+  const translateY = React.useRef(new Animated.Value(snapPoints.collapsed)).current;
+  const dragStartY = React.useRef(snapPoints.collapsed);
+  const currentTranslateY = React.useRef(snapPoints.collapsed);
   const scrollOffsetY = React.useRef(0);
+  const [snapState, setSnapState] = React.useState<SheetSnapState>('collapsed');
   const nextEvent = events[0] ?? null;
   const clubFavorited = selectedClub ? isClubFavorited(selectedClub._id) : false;
   const sheetBackgroundColor = resolvedTheme === 'light' ? 'hsl(0 0% 97%)' : colors.card;
+  const rippleColor = resolvedTheme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
+  const scrollEnabled = snapState === 'expanded';
 
   const animateTo = React.useCallback(
-    (toValue: number) => {
+    (toValue: number, nextState?: SheetSnapState) => {
       currentTranslateY.current = toValue;
+      if (nextState) {
+        setSnapState(nextState);
+      }
       Animated.spring(translateY, {
         toValue,
         useNativeDriver: true,
-        damping: 24,
-        stiffness: 220,
+        damping: 26,
+        stiffness: 230,
         mass: 0.9,
       }).start();
     },
@@ -102,16 +117,41 @@ export function DiscoverBottomSheet({
   );
 
   React.useEffect(() => {
-    animateTo(collapsedTranslateY);
-  }, [animateTo, collapsedTranslateY, selectedClub?._id]);
+    animateTo(snapPoints.collapsed, 'collapsed');
+  }, [animateTo, selectedClub?._id, snapPoints.collapsed]);
+
+  const nearestSnap = React.useCallback(
+    (projectedY: number): SheetSnapState => {
+      const entries = Object.entries(snapPoints) as [SheetSnapState, number][];
+      return entries.reduce((nearest, entry) =>
+        Math.abs(entry[1] - projectedY) < Math.abs(nearest[1] - projectedY) ? entry : nearest,
+      )[0];
+    },
+    [snapPoints],
+  );
+
+  const shouldDragSheet = React.useCallback(
+    (dy: number, dx: number) => {
+      if (Math.abs(dy) <= 5 || Math.abs(dy) <= Math.abs(dx)) {
+        return false;
+      }
+
+      if (currentTranslateY.current > snapPoints.expanded + 2) {
+        return true;
+      }
+
+      return dy > 0 && scrollOffsetY.current <= 1;
+    },
+    [snapPoints.expanded],
+  );
 
   const panResponder = React.useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dy) > 6 &&
-          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) &&
-          (currentTranslateY.current > 2 || (gestureState.dy > 0 && scrollOffsetY.current <= 1)),
+          shouldDragSheet(gestureState.dy, gestureState.dx),
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          shouldDragSheet(gestureState.dy, gestureState.dx),
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartY.current = value;
@@ -120,20 +160,23 @@ export function DiscoverBottomSheet({
         },
         onPanResponderMove: (_, gestureState) => {
           const nextTranslateY = Math.min(
-            collapsedTranslateY,
+            snapPoints.collapsed,
             Math.max(0, dragStartY.current + gestureState.dy),
           );
+          currentTranslateY.current = nextTranslateY;
           translateY.setValue(nextTranslateY);
         },
         onPanResponderRelease: (_, gestureState) => {
-          const projectedY = currentTranslateY.current + gestureState.dy + gestureState.vy * 80;
-          animateTo(projectedY > collapsedTranslateY * 0.5 ? collapsedTranslateY : 0);
+          const projectedY = currentTranslateY.current + gestureState.vy * 120;
+          const nextState = nearestSnap(projectedY);
+          animateTo(snapPoints[nextState], nextState);
         },
         onPanResponderTerminate: () => {
-          animateTo(currentTranslateY.current > collapsedTranslateY * 0.5 ? collapsedTranslateY : 0);
+          const nextState = nearestSnap(currentTranslateY.current);
+          animateTo(snapPoints[nextState], nextState);
         },
       }),
-    [animateTo, collapsedTranslateY, translateY],
+    [animateTo, nearestSnap, shouldDragSheet, snapPoints, translateY],
   );
 
   return (
@@ -157,6 +200,8 @@ export function DiscoverBottomSheet({
       {selectedClub ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
+          scrollEnabled={scrollEnabled}
+          nestedScrollEnabled
           contentContainerStyle={{ paddingBottom: bottomInset + 22 }}
           onScroll={(event) => {
             scrollOffsetY.current = event.nativeEvent.contentOffset.y;
@@ -190,7 +235,8 @@ export function DiscoverBottomSheet({
                 {selectedClub.websiteUrl ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Clubseite oeffnen"
+                    accessibilityLabel="Clubseite öffnen"
+                    android_ripple={{ color: rippleColor, borderless: true }}
                     className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
                     onPress={() => onOpenSource(selectedClub.websiteUrl)}>
                     <ExternalLink size={19} color={colors.foreground} />
@@ -200,6 +246,7 @@ export function DiscoverBottomSheet({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={clubFavorited ? 'Club aus Favoriten entfernen' : 'Club speichern'}
+                  android_ripple={{ color: rippleColor, borderless: true }}
                   className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
                   onPress={() => onToggleClubFavorite(selectedClub._id)}>
                   <Heart
@@ -217,13 +264,16 @@ export function DiscoverBottomSheet({
                   <Badge className="rounded-full px-2.5 py-1">
                     <Text>Event</Text>
                   </Badge>
-                  <Text className="text-sm font-semibold text-foreground">Naechstes Event</Text>
+                  <Text className="text-sm font-semibold text-foreground">Nächstes Event</Text>
                 </View>
                 <GripHorizontal size={16} color={colors.mutedForeground} />
               </View>
 
               {nextEvent ? (
-                <Pressable className="gap-2" onPress={() => onOpenEvent(nextEvent._id)}>
+                <Pressable
+                  android_ripple={{ color: rippleColor }}
+                  className="gap-2"
+                  onPress={() => onOpenEvent(nextEvent._id)}>
                   <Text className="text-lg font-semibold text-foreground" numberOfLines={2}>
                     {nextEvent.title}
                   </Text>
@@ -236,7 +286,7 @@ export function DiscoverBottomSheet({
                 </Pressable>
               ) : (
                 <Text className="text-muted-foreground text-sm">
-                  Keine bevorstehenden Events fuer diesen Club.
+                  Keine bevorstehenden Events für diesen Club.
                 </Text>
               )}
             </View>
@@ -247,11 +297,12 @@ export function DiscoverBottomSheet({
                   <Button
                     size="sm"
                     variant={isEventFavorited(nextEvent._id) ? 'default' : 'outline'}
+                    android_ripple={{ color: rippleColor }}
                     className="rounded-full"
                     onPress={() => onToggleEventFavorite(nextEvent._id)}>
                     <Heart
                       size={14}
-                      color={isEventFavorited(nextEvent._id) ? colors.primaryForeground : colors.primary}
+                      color={isEventFavorited(nextEvent._id) ? colors.primaryForeground : colors.foreground}
                       fill={isEventFavorited(nextEvent._id) ? colors.primaryForeground : 'transparent'}
                     />
                     <Text>{isEventFavorited(nextEvent._id) ? 'Event gespeichert' : 'Event speichern'}</Text>
@@ -260,6 +311,7 @@ export function DiscoverBottomSheet({
                   <Button
                     size="sm"
                     variant="secondary"
+                    android_ripple={{ color: rippleColor }}
                     className="rounded-full"
                     onPress={() => onOpenEvent(nextEvent._id)}>
                     <CalendarClock size={14} />
@@ -270,6 +322,7 @@ export function DiscoverBottomSheet({
                     <Button
                       size="sm"
                       variant="secondary"
+                      android_ripple={{ color: rippleColor }}
                       className="rounded-full"
                       onPress={() => onOpenSource(nextEvent.sourceUrl)}>
                       <ExternalLink size={14} />
@@ -293,10 +346,11 @@ export function DiscoverBottomSheet({
                   return (
                     <Pressable
                       key={event._id}
+                      android_ripple={{ color: rippleColor }}
                       className="flex-row gap-3 rounded-[16px] border border-border bg-background px-3 py-3"
                       onPress={() => onOpenEvent(event._id)}>
                       <View className="h-11 w-11 items-center justify-center rounded-full bg-secondary">
-                        <Music2 size={18} color={colors.primary} />
+                        <Music2 size={18} color={colors.foreground} />
                       </View>
                       <View className="min-w-0 flex-1 gap-1">
                         <View className="flex-row items-center gap-2">
@@ -315,6 +369,7 @@ export function DiscoverBottomSheet({
                         </Text>
                       </View>
                       <Pressable
+                        android_ripple={{ color: rippleColor, borderless: true }}
                         className="h-10 w-10 items-center justify-center rounded-full"
                         onPress={(pressEvent) => {
                           pressEvent.stopPropagation();
@@ -322,8 +377,8 @@ export function DiscoverBottomSheet({
                         }}>
                         <Heart
                           size={18}
-                          color={favorited ? colors.primary : colors.mutedForeground}
-                          fill={favorited ? colors.primary : 'transparent'}
+                          color={favorited ? colors.foreground : colors.mutedForeground}
+                          fill={favorited ? colors.foreground : 'transparent'}
                         />
                       </Pressable>
                     </Pressable>
@@ -342,12 +397,12 @@ export function DiscoverBottomSheet({
       ) : (
         <View className="gap-2 px-5 pb-8">
           <Text className="text-lg font-semibold text-foreground">
-            {isLoading ? 'Clubs werden geladen...' : 'Keine Clubs verfuegbar'}
+            {isLoading ? 'Clubs werden geladen...' : 'Keine Clubs verfügbar'}
           </Text>
           <Text className="text-muted-foreground text-sm">
             {errorMessage
               ? `Convex konnte nicht geladen werden: ${errorMessage}`
-              : 'Sobald Clubs geladen sind, erscheint hier die Club- und Eventuebersicht.'}
+              : 'Sobald Clubs geladen sind, erscheint hier die Club- und Eventübersicht.'}
           </Text>
         </View>
       )}

@@ -187,19 +187,26 @@ export function DiscoverMap({
             id="club-marker-fill"
             type="circle"
             paint={{
-              'circle-radius': ['case', ['get', 'selected'], 15, 13],
+              'circle-radius': ['case', ['get', 'selected'], 17, 15],
               'circle-color': ['case', ['get', 'selected'], colors.primary, '#ffffff'],
-              'circle-stroke-color': ['case', ['get', 'selected'], colors.primaryForeground, 'rgba(17,17,17,0.18)'],
-              'circle-stroke-width': ['case', ['get', 'selected'], 2, 1],
+              'circle-stroke-color': ['case', ['get', 'selected'], colors.foreground, 'rgba(17,17,17,0.22)'],
+              'circle-stroke-width': ['case', ['get', 'selected'], 2.5, 1],
             }}
           />
           <Layer
-            id="club-marker-dot"
-            type="circle"
+            id="club-marker-icon"
+            type="symbol"
+            layout={{
+              'text-allow-overlap': true,
+              'text-field': '♪',
+              'text-font': ['Open Sans Bold'],
+              'text-ignore-placement': true,
+              'text-size': ['case', ['get', 'selected'], 20, 18],
+            }}
             paint={{
-              'circle-radius': ['case', ['get', 'selected'], 5, 4],
-              'circle-color': colors.primaryForeground,
-              'circle-opacity': 0.92,
+              'text-color': colors.foreground,
+              'text-halo-color': ['case', ['get', 'selected'], colors.primary, '#ffffff'],
+              'text-halo-width': 0.4,
             }}
           />
         </GeoJSONSource>
@@ -252,8 +259,18 @@ export function DiscoverMap({
               backgroundColor: openTodayOnly ? colors.primary : pressed ? colors.secondary : colors.card,
             },
           ]}>
-          <CalendarCheck2 size={17} color={colors.primaryForeground} strokeWidth={2.4} />
-          <Text style={[styles.filterButtonText, { color: colors.primaryForeground }]}>Heute offen</Text>
+          <CalendarCheck2
+            size={17}
+            color={openTodayOnly ? colors.primaryForeground : colors.foreground}
+            strokeWidth={2.4}
+          />
+          <Text
+            style={[
+              styles.filterButtonText,
+              { color: openTodayOnly ? colors.primaryForeground : colors.foreground },
+            ]}>
+            Heute offen
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -265,12 +282,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   mapControls: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
+    alignItems: 'flex-end',
+    gap: 12,
     position: 'absolute',
     right: 14,
-    top: 58,
+    top: 96,
   },
   controlButton: {
     alignItems: 'center',

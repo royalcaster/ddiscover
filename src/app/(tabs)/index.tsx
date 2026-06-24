@@ -142,7 +142,7 @@ export default function DiscoverScreen() {
       setCameraTarget(coordinates);
     } catch (error) {
       console.warn('Failed to get current location', error);
-      Alert.alert('Standort nicht verfuegbar', 'Dein Standort konnte gerade nicht geladen werden.');
+      Alert.alert('Standort nicht verfügbar', 'Dein Standort konnte gerade nicht geladen werden.');
     }
   };
 

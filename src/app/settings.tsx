@@ -16,7 +16,7 @@ export default function SettingsScreen() {
         <Card className="rounded-[22px] py-0">
           <CardContent className="gap-4 px-4 py-4">
             <View className="flex-row items-center gap-2">
-              <MoonStar size={18} color={theme.primary} />
+              <MoonStar size={18} color={theme.foreground} />
               <Text className="text-base font-semibold">Farbschema</Text>
             </View>
             <ThemeModeToggle />

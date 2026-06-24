@@ -52,7 +52,7 @@ function SignedInCard() {
             />
           ) : (
             <View className="items-center justify-center rounded-full bg-secondary" style={styles.profileImage}>
-              <ShieldCheck size={20} color={theme.primary} />
+              <ShieldCheck size={20} color={theme.foreground} />
             </View>
           )}
           <View className="flex-1">
@@ -82,8 +82,8 @@ function FavoritesSection() {
   const favorites = useFavorites();
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
-  const clubs = clubsQuery.data ?? [];
-  const events = eventsQuery.data ?? [];
+  const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
+  const events = React.useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
 
   const favoriteClubs = React.useMemo(
     () => clubs.filter((club) => favorites.clubIds.has(club._id)),
@@ -101,7 +101,11 @@ function FavoritesSection() {
       <CardContent className="gap-4 px-4 py-4">
         <View className="flex-row items-center justify-between gap-3">
           <View className="flex-row items-center gap-2">
-            <Heart size={18} color={theme.primary} fill={favoriteCount > 0 ? theme.primary : 'transparent'} />
+            <Heart
+              size={18}
+              color={theme.foreground}
+              fill={favoriteCount > 0 ? theme.foreground : 'transparent'}
+            />
             <Text className="text-lg font-semibold">Favorites</Text>
           </View>
           <Badge variant="secondary" className="px-2.5 py-1">
@@ -126,7 +130,7 @@ function FavoritesSection() {
                 <Text className="text-muted-foreground text-xs font-semibold uppercase">Clubs</Text>
                 {favoriteClubs.slice(0, 5).map((club) => (
                   <View key={club._id} className="flex-row items-center gap-3 rounded-[12px] bg-secondary px-3 py-3">
-                    <Building2 size={16} color={theme.primary} />
+                    <Building2 size={16} color={theme.foreground} />
                     <View className="flex-1">
                       <Text className="text-sm font-semibold">{club.name}</Text>
                       <Text className="text-muted-foreground text-xs">{club.city ?? 'Dresden'}</Text>
@@ -142,9 +146,10 @@ function FavoritesSection() {
                 {favoriteEvents.slice(0, 5).map((event) => (
                   <Pressable
                     key={event._id}
+                    android_ripple={{ color: theme.secondary }}
                     className="flex-row items-center gap-3 rounded-[12px] bg-secondary px-3 py-3"
                     onPress={() => openEventDetail(event._id)}>
-                    <CalendarClock size={16} color={theme.primary} />
+                    <CalendarClock size={16} color={theme.foreground} />
                     <View className="flex-1">
                       <Text className="text-sm font-semibold">{event.title}</Text>
                       <Text className="text-muted-foreground text-xs">{formatEventDate(event.startsAt)}</Text>
@@ -192,7 +197,7 @@ function SettingsContent() {
       <Card className="rounded-[22px] py-0">
         <CardContent className="gap-4 px-4 py-4">
           <View className="flex-row items-center gap-2">
-            <MoonStar size={18} color={theme.primary} />
+            <MoonStar size={18} color={theme.foreground} />
             <Text className="text-base font-semibold">Farbschema</Text>
           </View>
           <ThemeModeToggle />

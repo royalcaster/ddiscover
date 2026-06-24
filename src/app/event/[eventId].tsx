@@ -80,12 +80,12 @@ type DvbRouteResult =
         name: string;
         city: string;
       };
-      trips: Array<{
+      trips: {
         duration: number;
         interchanges: number;
         departureTime: number | null;
         arrivalTime: number | null;
-        legs: Array<{
+        legs: {
           line: string;
           direction: string;
           mode: string | null;
@@ -95,8 +95,8 @@ type DvbRouteResult =
           departureTime: number | null;
           arrivalTime: number | null;
           stopCount: number;
-        }>;
-      }>;
+        }[];
+      }[];
     };
 
 type DvbRoutePlannerProps = {
@@ -148,7 +148,7 @@ function DvbRoutePlanner({
   return (
     <View className="gap-4 rounded-[14px] border border-border bg-card px-4 py-4">
       <View className="flex-row items-center gap-2">
-        <Navigation size={18} color={theme.primary} />
+        <Navigation size={18} color={theme.foreground} />
         <Text className="text-base font-semibold">DVB Anreise</Text>
       </View>
 
@@ -171,6 +171,7 @@ function DvbRoutePlanner({
 
       <Button
         variant="secondary"
+        android_ripple={{ color: theme.secondary }}
         className="rounded-full"
         disabled={!canPlanRoute || isLoading}
         onPress={() => void loadRoute()}>
@@ -179,7 +180,7 @@ function DvbRoutePlanner({
       </Button>
 
       {!canPlanRoute ? (
-        <Text className="text-muted-foreground text-sm">Fuer dieses Event fehlen noch Adressdaten.</Text>
+        <Text className="text-muted-foreground text-sm">Für dieses Event fehlen noch Adressdaten.</Text>
       ) : routeResult?.status === 'error' ? (
         <Text className="text-muted-foreground text-sm">{routeResult.message}</Text>
       ) : routeResult?.status === 'ok' ? (
@@ -224,7 +225,7 @@ function DvbRoutePlanner({
         </View>
       ) : (
         <Text className="text-muted-foreground text-sm">
-          Berechnet eine DVB-Verbindung zur naechsten Haltestelle am Veranstaltungsort.
+          Berechnet eine DVB-Verbindung zur nächsten Haltestelle am Veranstaltungsort.
         </Text>
       )}
     </View>
@@ -263,18 +264,25 @@ export default function EventDetailScreen() {
           <Image source={heroImageSource} className="h-full w-full opacity-90" contentFit="cover" />
           <View className="absolute inset-0 bg-black/35" />
           <View className="absolute left-4 right-4 top-3 flex-row items-center justify-between">
-            <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-black/45" onPress={() => router.back()}>
+            <Pressable
+              android_ripple={{ color: 'rgba(255,255,255,0.18)', borderless: true }}
+              className="h-10 w-10 items-center justify-center rounded-full bg-black/45"
+              onPress={() => router.back()}>
               <ArrowLeft size={20} color="#fff" />
             </Pressable>
             <View className="flex-row gap-2">
               {event ? (
                 <Pressable
+                  android_ripple={{ color: 'rgba(255,255,255,0.18)', borderless: true }}
                   className="h-10 w-10 items-center justify-center rounded-full bg-black/45"
                   onPress={() => void favorites.toggle({ entityType: 'event', eventId: event._id })}>
                   <Heart size={19} color="#fff" fill={favorited ? '#f4d63d' : 'transparent'} />
                 </Pressable>
               ) : null}
-              <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-black/45" onPress={shareEvent}>
+              <Pressable
+                android_ripple={{ color: 'rgba(255,255,255,0.18)', borderless: true }}
+                className="h-10 w-10 items-center justify-center rounded-full bg-black/45"
+                onPress={shareEvent}>
                 <Share2 size={19} color="#fff" />
               </Pressable>
             </View>
@@ -291,7 +299,7 @@ export default function EventDetailScreen() {
             <Text className="text-muted-foreground text-sm">
               {detailQuery.error
                 ? `Convex konnte nicht geladen werden: ${detailQuery.error.message}`
-                : 'Dieses Event ist nicht mehr verfuegbar.'}
+                : 'Dieses Event ist nicht mehr verfügbar.'}
             </Text>
           </View>
         ) : (
@@ -304,11 +312,11 @@ export default function EventDetailScreen() {
 
               <View className="flex-row flex-wrap gap-2">
                 <View className="flex-row items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
-                  <Music2 size={14} color={theme.primary} />
+                  <Music2 size={14} color={theme.foreground} />
                   <Text className="text-xs font-semibold">{inferGenre(event.title)}</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
-                  <CalendarClock size={14} color={theme.primary} />
+                  <CalendarClock size={14} color={theme.foreground} />
                   <Text className="text-xs font-semibold">{formatEventTime(event.startsAt)}</Text>
                 </View>
               </View>
@@ -327,7 +335,10 @@ export default function EventDetailScreen() {
                 </View>
               </View>
               {websiteUrl ? (
-                <Pressable className="flex-row items-center justify-between gap-3 border-b border-border px-4 py-4" onPress={() => void Linking.openURL(websiteUrl)}>
+                <Pressable
+                  android_ripple={{ color: theme.secondary }}
+                  className="flex-row items-center justify-between gap-3 border-b border-border px-4 py-4"
+                  onPress={() => void Linking.openURL(websiteUrl)}>
                   <View className="gap-1">
                     <Text className="text-muted-foreground text-xs font-semibold uppercase">Club Website</Text>
                     <Text className="text-sm font-semibold">{websiteUrl.replace(/^https?:\/\//, '')}</Text>
@@ -336,7 +347,10 @@ export default function EventDetailScreen() {
                 </Pressable>
               ) : null}
               {event.sourceUrl ? (
-                <Pressable className="flex-row items-center justify-between gap-3 px-4 py-4" onPress={() => void Linking.openURL(event.sourceUrl!)}>
+                <Pressable
+                  android_ripple={{ color: theme.secondary }}
+                  className="flex-row items-center justify-between gap-3 px-4 py-4"
+                  onPress={() => void Linking.openURL(event.sourceUrl!)}>
                   <View className="gap-1">
                     <Text className="text-muted-foreground text-xs font-semibold uppercase">Quelle</Text>
                     <Text className="text-sm font-semibold">Original Eventseite</Text>
@@ -356,9 +370,14 @@ export default function EventDetailScreen() {
 
             <Button
               variant={favorited ? 'default' : 'outline'}
+              android_ripple={{ color: theme.secondary }}
               className="rounded-full"
               onPress={() => void favorites.toggle({ entityType: 'event', eventId: event._id })}>
-              <Heart size={16} color={favorited ? '#111' : theme.primary} fill={favorited ? '#111' : 'transparent'} />
+              <Heart
+                size={16}
+                color={favorited ? theme.primaryForeground : theme.foreground}
+                fill={favorited ? theme.primaryForeground : 'transparent'}
+              />
               <Text>{favorited ? 'Event gespeichert' : 'Event speichern'}</Text>
             </Button>
           </View>

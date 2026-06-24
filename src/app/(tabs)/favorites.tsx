@@ -24,14 +24,14 @@ export default function FavoritesScreen() {
                 <View className="gap-1">
                   <Text className="text-[16px] font-semibold">{club.name}</Text>
                   <Text className="text-muted-foreground text-[13px]">
-                    {club.category} • {club.district}
+                    {club.category} - {club.district}
                   </Text>
                   <Text className="text-[13px]">{club.tonight}</Text>
                 </View>
                 <Text className="text-muted-foreground text-[12px]">{club.walkDistance}</Text>
               </View>
               <View className="h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                <Heart size={16} color={theme.primary} />
+                <Heart size={16} color={theme.foreground} />
               </View>
             </CardContent>
           </Card>

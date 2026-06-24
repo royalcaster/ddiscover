@@ -42,7 +42,7 @@ export function DiscoverMap({
         <View>
           <Text className="text-sm font-semibold">Kartenansicht (Web-Fallback)</Text>
           <Text className="text-muted-foreground mt-1 text-xs">
-            Interaktive Marker sind in der nativen App verfuegbar.
+            Interaktive Marker sind in der nativen App verfügbar.
           </Text>
         </View>
         <View className="flex-row gap-2">
