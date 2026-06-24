@@ -241,6 +241,7 @@ export default function EventDetailScreen() {
   const event = detail?.event;
   const club = detail?.club;
   const favorited = event ? favorites.isEventFavorited(event._id) : false;
+  const heroImageSource = event?.imageUrl ? { uri: event.imageUrl } : EVENT_HERO;
 
   const address = event
     ? formatAddress(event.addressLine ?? club?.addressLine, event.postalCode ?? club?.postalCode, event.city ?? club?.city)
@@ -259,7 +260,7 @@ export default function EventDetailScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1" contentContainerClassName="pb-28">
         <View className="relative h-[300px] overflow-hidden bg-secondary">
-          <Image source={EVENT_HERO} className="h-full w-full opacity-90" contentFit="cover" />
+          <Image source={heroImageSource} className="h-full w-full opacity-90" contentFit="cover" />
           <View className="absolute inset-0 bg-black/35" />
           <View className="absolute left-4 right-4 top-3 flex-row items-center justify-between">
             <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-black/45" onPress={() => router.back()}>

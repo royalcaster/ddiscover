@@ -138,6 +138,7 @@ export default function CalendarScreen() {
               const club = clubs.find((entry) => entry._id === event.clubId);
               const favorited = favorites.isEventFavorited(event._id);
               const isLast = index === filteredEvents.length - 1;
+              const imageSource = event.imageUrl ? { uri: event.imageUrl } : EVENT_THUMBNAIL;
 
               return (
                 <Pressable
@@ -145,10 +146,14 @@ export default function CalendarScreen() {
                   className={isLast ? 'flex-row gap-3 px-3 py-3' : 'flex-row gap-3 border-b border-border px-3 py-3'}
                   onPress={() => openEventDetail(event._id)}>
                   <View className="h-[76px] w-[76px] overflow-hidden rounded-[10px] bg-secondary">
-                    <Image source={EVENT_THUMBNAIL} className="h-full w-full opacity-80" contentFit="cover" />
-                    <View className="absolute inset-0 items-center justify-center bg-black/20 dark:bg-black/35">
-                      <Music2 size={20} color={theme.primary} />
-                    </View>
+                    <Image source={imageSource} className="h-full w-full" contentFit="cover" />
+                    {event.imageUrl ? (
+                      <View className="absolute inset-0 bg-black/10 dark:bg-black/20" />
+                    ) : (
+                      <View className="absolute inset-0 items-center justify-center bg-black/20 dark:bg-black/35">
+                        <Music2 size={20} color={theme.primary} />
+                      </View>
+                    )}
                   </View>
 
                   <View className="min-w-0 flex-1 gap-1">

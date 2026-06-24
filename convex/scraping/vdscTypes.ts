@@ -1,5 +1,7 @@
 import { v } from 'convex/values';
 
+import type { Id } from '../_generated/dataModel';
+
 export const scrapedVdscEventValidator = v.object({
   clubName: v.string(),
   locationName: v.string(),
@@ -16,6 +18,8 @@ export const scrapedVdscEventValidator = v.object({
   source: v.literal('vdsc'),
   sourceKey: v.string(),
   sourceUrl: v.optional(v.string()),
+  imageStorageId: v.optional(v.id('_storage')),
+  imageSourceUrl: v.optional(v.string()),
 });
 
 export type ScrapedVdscEvent = {
@@ -34,4 +38,6 @@ export type ScrapedVdscEvent = {
   source: 'vdsc';
   sourceKey: string;
   sourceUrl?: string;
+  imageStorageId?: Id<'_storage'>;
+  imageSourceUrl?: string;
 };

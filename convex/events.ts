@@ -1,8 +1,17 @@
 import { v } from 'convex/values';
 
-import { internalMutation, query } from './_generated/server';
+import type { Doc, Id } from './_generated/dataModel';
+import { internalMutation, internalQuery, query, type QueryCtx } from './_generated/server';
 import { resolveClubProfile } from './scraping/clubCatalog';
 import { scrapedVdscEventValidator } from './scraping/vdscTypes';
+
+async function withImageUrl(ctx: QueryCtx, event: Doc<'events'>) {
+  const imageUrl = event.imageStorageId ? await ctx.storage.getUrl(event.imageStorageId) : null;
+  return {
+    ...event,
+    imageUrl,
+  };
+}
 
 export const listUpcoming = query({
   args: {
@@ -13,11 +22,13 @@ export const listUpcoming = query({
     const now = args.now ?? Date.now();
     const limit = args.limit ?? 25;
 
-    return await ctx.db
+    const events = await ctx.db
       .query('events')
       .withIndex('by_starts_at', (q) => q.gte('startsAt', now))
       .order('asc')
       .take(limit);
+
+    return await Promise.all(events.map((event) => withImageUrl(ctx, event)));
   },
 });
 
@@ -33,9 +44,44 @@ export const getById = query({
 
     const club = await ctx.db.get(event.clubId);
     return {
-      event,
+      event: await withImageUrl(ctx, event),
       club,
     };
+  },
+});
+
+export const listExistingImageRefs = internalQuery({
+  args: {
+    source: v.literal('vdsc'),
+    sourceKeys: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const refs: Array<{
+      sourceKey: string;
+      imageStorageId: Id<'_storage'>;
+      imageSourceUrl: string;
+    }> = [];
+
+    for (const sourceKey of args.sourceKeys) {
+      const event = await ctx.db
+        .query('events')
+        .withIndex('by_source_and_source_key', (q) =>
+          q.eq('source', args.source).eq('sourceKey', sourceKey),
+        )
+        .unique();
+
+      if (!event?.imageStorageId || !event.imageSourceUrl) {
+        continue;
+      }
+
+      refs.push({
+        sourceKey,
+        imageStorageId: event.imageStorageId,
+        imageSourceUrl: event.imageSourceUrl,
+      });
+    }
+
+    return refs;
   },
 });
 
@@ -87,6 +133,8 @@ export const upsertScrapedVdscEvents = internalMutation({
         source: event.source,
         sourceKey: event.sourceKey,
         sourceUrl: event.sourceUrl,
+        imageStorageId: event.imageStorageId ?? existingEvent?.imageStorageId,
+        imageSourceUrl: event.imageSourceUrl ?? existingEvent?.imageSourceUrl,
         addressLine: event.addressLine,
         postalCode: event.postalCode,
         city: event.city,

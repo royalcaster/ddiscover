@@ -25,7 +25,7 @@
 - Backend: Convex, configured through `EXPO_PUBLIC_CONVEX_URL`.
 - Authentication: Clerk, configured through `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 - Auth UX: guest-first; Clerk prebuilt sign-in is embedded in the `Profil` tab, while core discovery remains usable without authentication.
-- Event ingestion: Convex action imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json` and upserts events by source key.
+- Event ingestion: Convex imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json`, scrapes one image per event when available, stores images in Convex Storage, and upserts events by source key. A Convex cron runs the import every 24 hours.
 - Geocoding pipeline: VDSC imports now enrich club/event coordinates via Nominatim lookup with a Convex `geocodingCache` table to avoid repeated external lookups.
 - UI styling: React Native Reusables-compatible NativeWind setup with `components.json`, semantic light/dark tokens, and registry-backed UI primitives aligned to the design reference in `docs/design/`.
 

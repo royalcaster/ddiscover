@@ -30,6 +30,8 @@ export default defineSchema({
     source: v.optional(v.string()),
     sourceKey: v.optional(v.string()),
     sourceUrl: v.optional(v.string()),
+    imageStorageId: v.optional(v.id('_storage')),
+    imageSourceUrl: v.optional(v.string()),
     addressLine: v.optional(v.string()),
     postalCode: v.optional(v.string()),
     city: v.optional(v.string()),
