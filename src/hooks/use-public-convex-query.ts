@@ -13,6 +13,57 @@ const publicConvexClient = publicConvexUrl
   ? new ConvexHttpClient(publicConvexUrl, { logger: false })
   : null;
 
+function getPublicConvexHost() {
+  if (!publicConvexUrl) return 'not-configured';
+
+  try {
+    return new URL(publicConvexUrl).host;
+  } catch {
+    return publicConvexUrl;
+  }
+}
+
+function describeConvexError(error: unknown) {
+  if (error instanceof Error) {
+    const message = error.message.trim();
+    const name = error.name.trim();
+    return [name === 'Error' ? null : name, message || null]
+      .filter(Boolean)
+      .join(': ') || 'Unknown Convex query error.';
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  try {
+    const serialized = JSON.stringify(error);
+    if (serialized && serialized !== '{}') {
+      return serialized;
+    }
+  } catch {
+    // Fall through to the generic message.
+  }
+
+  return 'Unknown Convex query error.';
+}
+
+function inspectConvexError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return error;
+  }
+
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack?.split('\n').slice(0, 4).join('\n'),
+    cause: error.cause,
+    properties: Object.fromEntries(
+      Object.getOwnPropertyNames(error).map((key) => [key, (error as unknown as Record<string, unknown>)[key]]),
+    ),
+  };
+}
+
 export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
   query: Query,
   args: FunctionArgs<Query> | null,
@@ -63,13 +114,20 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
       setData(result);
     } catch (queryError) {
       if (requestId !== requestIdRef.current) return;
-      setError(queryError instanceof Error ? queryError : new Error('Convex query failed.'));
+      const errorMessage = describeConvexError(queryError);
+      console.error('[Convex public query] failed', {
+        queryName,
+        convexHost: getPublicConvexHost(),
+        errorMessage,
+        error: inspectConvexError(queryError),
+      });
+      setError(new Error(errorMessage));
       setData(undefined);
     } finally {
       if (requestId !== requestIdRef.current) return;
       setIsLoading(false);
     }
-  }, [stableQuery]);
+  }, [queryName, stableQuery]);
 
   React.useEffect(() => {
     void argsKey;
