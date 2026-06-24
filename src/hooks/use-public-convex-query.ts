@@ -4,6 +4,7 @@ import type {
   FunctionReference,
   FunctionReturnType,
 } from 'convex/server';
+import { getFunctionName, makeFunctionReference } from 'convex/server';
 import React from 'react';
 
 import { publicConvexUrl } from '@/lib/public-config';
@@ -19,9 +20,26 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
   const [data, setData] = React.useState<FunctionReturnType<Query> | undefined>(undefined);
   const [error, setError] = React.useState<Error | null>(null);
   const [isLoading, setIsLoading] = React.useState(Boolean(publicConvexClient));
-  const argsKey = React.useMemo(() => JSON.stringify(args), [args]);
+  const requestIdRef = React.useRef(0);
+  const queryName = getFunctionName(query);
+  const argsKey = JSON.stringify(args);
+  const argsKeyRef = React.useRef(argsKey);
+  const stableArgsRef = React.useRef<FunctionArgs<Query> | null>(args);
+  const stableQuery = React.useMemo(
+    () => makeFunctionReference<'query', FunctionArgs<Query>, FunctionReturnType<Query>>(queryName),
+    [queryName],
+  );
+
+  if (argsKeyRef.current !== argsKey) {
+    argsKeyRef.current = argsKey;
+    stableArgsRef.current = args;
+  }
 
   const load = React.useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    const stableArgs = stableArgsRef.current;
+
     if (!publicConvexClient) {
       setData(undefined);
       setError(new Error('EXPO_PUBLIC_CONVEX_URL is not configured.'));
@@ -29,7 +47,7 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
       return;
     }
 
-    if (args === null) {
+    if (stableArgs === null) {
       setData(undefined);
       setError(null);
       setIsLoading(false);
@@ -40,19 +58,23 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
     setError(null);
 
     try {
-      const result = await publicConvexClient.query(query, args);
+      const result = await publicConvexClient.query(stableQuery, stableArgs);
+      if (requestId !== requestIdRef.current) return;
       setData(result);
     } catch (queryError) {
+      if (requestId !== requestIdRef.current) return;
       setError(queryError instanceof Error ? queryError : new Error('Convex query failed.'));
       setData(undefined);
     } finally {
+      if (requestId !== requestIdRef.current) return;
       setIsLoading(false);
     }
-  }, [argsKey, query]);
+  }, [stableQuery]);
 
   React.useEffect(() => {
+    void argsKey;
     void load();
-  }, [load]);
+  }, [argsKey, load]);
 
   return {
     data,
