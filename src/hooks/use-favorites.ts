@@ -1,8 +1,8 @@
 import { useAuth } from '@clerk/expo';
-import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 
 import type { Id } from '../../convex/_generated/dataModel';
+import { useFavoriteSignInPrompt } from '@/providers/favorite-sign-in-provider';
 
 type FavoriteEntityType = 'club' | 'event';
 
@@ -17,25 +17,17 @@ type ToggleFavoriteArgs =
     };
 
 export function useFavorites() {
-  const router = useRouter();
   const { isSignedIn } = useAuth();
+  const { showSignInPrompt } = useFavoriteSignInPrompt();
   const clubIds = new Set<Id<'clubs'>>();
   const eventIds = new Set<Id<'events'>>();
 
   const isClubFavorited = (clubId: Id<'clubs'>) => clubIds.has(clubId);
   const isEventFavorited = (eventId: Id<'events'>) => eventIds.has(eventId);
 
-  const requestSignIn = () => {
-    Alert.alert(
-      'Anmeldung erforderlich',
-      'Zum Speichern von Favoriten melde dich bitte im Profil an.',
-      [{ text: 'Zum Profil', onPress: () => router.push('/profile') }, { text: 'Abbrechen', style: 'cancel' }],
-    );
-  };
-
   const toggle = async (args: ToggleFavoriteArgs) => {
     if (!isSignedIn) {
-      requestSignIn();
+      showSignInPrompt();
       return null;
     }
 

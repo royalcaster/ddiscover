@@ -45,11 +45,11 @@ export default function DiscoverScreen() {
   const events = React.useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   const favorites = useFavorites();
 
-  const [, setRegion] = React.useState(INITIAL_REGION);
   const [selectedMarkerId, setSelectedMarkerId] = React.useState<string | null>(null);
   const [userLocation, setUserLocation] = React.useState<{ latitude: number; longitude: number } | null>(null);
   const [cameraTarget, setCameraTarget] = React.useState<{ latitude: number; longitude: number } | null>(null);
   const [openTodayOnly, setOpenTodayOnly] = React.useState(false);
+  const handleRegionChangeComplete = React.useCallback(() => {}, []);
 
   const todayKey = React.useMemo(() => toLocalDayKey(Date.now()), []);
   const clubIdsWithEventsToday = React.useMemo(
@@ -97,6 +97,17 @@ export default function DiscoverScreen() {
 
   const selectedMarker = selectedMarkerId ? markerById.get(selectedMarkerId) : null;
   const selectedClub = selectedMarker ? clubs.find((club) => club._id === selectedMarker.clubId) ?? null : null;
+  const mapMarkers = React.useMemo(
+    () =>
+      markers.map((marker) => ({
+        id: marker.id,
+        title: marker.name,
+        subtitle: marker.district,
+        latitude: marker.latitude,
+        longitude: marker.longitude,
+      })),
+    [markers],
+  );
 
   const selectedClubEvents = React.useMemo(
     () =>
@@ -143,19 +154,13 @@ export default function DiscoverScreen() {
   return (
     <View className="flex-1 bg-background">
       <DiscoverMap
-        markers={markers.map((marker) => ({
-          id: marker.id,
-          title: marker.name,
-          subtitle: marker.district,
-          latitude: marker.latitude,
-          longitude: marker.longitude,
-        }))}
+        markers={mapMarkers}
         selectedMarkerId={selectedMarkerId}
         userLocation={userLocation}
         cameraTarget={cameraTarget}
         initialRegion={INITIAL_REGION}
         openTodayOnly={openTodayOnly}
-        onRegionChangeComplete={setRegion}
+        onRegionChangeComplete={handleRegionChangeComplete}
         onSelectMarker={(markerId) => {
           setCameraTarget(null);
           setSelectedMarkerId(markerId);

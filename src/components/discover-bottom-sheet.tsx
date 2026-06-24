@@ -14,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/providers/theme-provider';
 
 const COLLAPSED_CLUB_SUMMARY_HEIGHT = 122;
 const COLLAPSED_EMPTY_HEIGHT = 112;
@@ -72,7 +72,7 @@ export function DiscoverBottomSheet({
   onOpenEvent,
   onOpenSource,
 }: DiscoverBottomSheetProps) {
-  const colors = useTheme();
+  const { colors, resolvedTheme } = useAppTheme();
   const { height } = useWindowDimensions();
   const maxSheetHeight = Math.min(height * 0.72, 620);
   const collapsedHeight = selectedClub
@@ -82,8 +82,10 @@ export function DiscoverBottomSheet({
   const translateY = React.useRef(new Animated.Value(collapsedTranslateY)).current;
   const dragStartY = React.useRef(collapsedTranslateY);
   const currentTranslateY = React.useRef(collapsedTranslateY);
+  const scrollOffsetY = React.useRef(0);
   const nextEvent = events[0] ?? null;
   const clubFavorited = selectedClub ? isClubFavorited(selectedClub._id) : false;
+  const sheetBackgroundColor = resolvedTheme === 'light' ? 'hsl(0 0% 97%)' : colors.card;
 
   const animateTo = React.useCallback(
     (toValue: number) => {
@@ -107,7 +109,9 @@ export function DiscoverBottomSheet({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dy) > 6 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+          Math.abs(gestureState.dy) > 6 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) &&
+          (currentTranslateY.current > 2 || (gestureState.dy > 0 && scrollOffsetY.current <= 1)),
         onPanResponderGrant: () => {
           translateY.stopAnimation((value) => {
             dragStartY.current = value;
@@ -134,6 +138,7 @@ export function DiscoverBottomSheet({
 
   return (
     <Animated.View
+      {...panResponder.panHandlers}
       className="absolute inset-x-0 bottom-0 overflow-hidden rounded-t-[28px] border border-border bg-card"
       style={[
         styles.sheet,
@@ -141,11 +146,11 @@ export function DiscoverBottomSheet({
           maxHeight: maxSheetHeight,
           minHeight: maxSheetHeight,
           transform: [{ translateY }],
-          backgroundColor: colors.card,
+          backgroundColor: sheetBackgroundColor,
           borderColor: colors.border,
         },
       ]}>
-      <View {...panResponder.panHandlers} className="items-center px-5 pb-2 pt-2">
+      <View className="items-center px-5 pb-2 pt-2">
         <View className="h-1.5 w-12 rounded-full bg-muted" />
       </View>
 
@@ -153,6 +158,10 @@ export function DiscoverBottomSheet({
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: bottomInset + 22 }}
+          onScroll={(event) => {
+            scrollOffsetY.current = event.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           className="px-4">
           <View className="gap-4">
             <View className="flex-row items-start justify-between gap-3">

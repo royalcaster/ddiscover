@@ -1,6 +1,14 @@
 import React from 'react';
-import { Camera, Map, Marker, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
-import { Beer, CalendarCheck2, LocateFixed, UserRound } from 'lucide-react-native';
+import {
+  Camera,
+  GeoJSONSource,
+  Layer,
+  Map,
+  type CameraRef,
+  type PressEventWithFeatures,
+  type ViewStateChangeEvent,
+} from '@maplibre/maplibre-react-native';
+import { CalendarCheck2, LocateFixed } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import type { MapRegion } from '@/lib/map-types';
@@ -10,9 +18,6 @@ const MAP_STYLES = {
   light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
 } as const;
-
-const MARKER_SIZE = 32;
-const USER_MARKER_SIZE = 30;
 
 type DiscoverMarker = {
   id: string;
@@ -51,6 +56,44 @@ function regionFromViewState(event: NativeSyntheticEvent<ViewStateChangeEvent>):
   };
 }
 
+function markerFeatureCollection(markers: DiscoverMarker[], selectedMarkerId: string | null) {
+  return {
+    type: 'FeatureCollection',
+    features: markers.map((marker) => ({
+      type: 'Feature',
+      id: marker.id,
+      properties: {
+        id: marker.id,
+        title: marker.title,
+        subtitle: marker.subtitle ?? '',
+        selected: marker.id === selectedMarkerId,
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [marker.longitude, marker.latitude],
+      },
+    })),
+  } as GeoJSON.FeatureCollection;
+}
+
+function userFeatureCollection(userLocation: DiscoverMapProps['userLocation']) {
+  return {
+    type: 'FeatureCollection',
+    features: userLocation
+      ? [
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'Point',
+              coordinates: [userLocation.longitude, userLocation.latitude],
+            },
+          },
+        ]
+      : [],
+  } as GeoJSON.FeatureCollection;
+}
+
 export function DiscoverMap({
   markers,
   selectedMarkerId,
@@ -63,13 +106,50 @@ export function DiscoverMap({
   onCenterUserLocation,
   onToggleOpenToday,
 }: DiscoverMapProps) {
-  const { resolvedTheme } = useAppTheme();
-  const selectedMarker = markers.find((marker) => marker.id === selectedMarkerId);
-  const centerCoordinate: [number, number] = cameraTarget
-    ? [cameraTarget.longitude, cameraTarget.latitude]
-    : selectedMarker
-    ? [selectedMarker.longitude, selectedMarker.latitude]
-    : [initialRegion.longitude, initialRegion.latitude];
+  const { colors, resolvedTheme } = useAppTheme();
+  const cameraRef = React.useRef<CameraRef>(null);
+  const lastCameraTargetRef = React.useRef<string | null>(null);
+  const initialCenter = React.useMemo<[number, number]>(
+    () => [initialRegion.longitude, initialRegion.latitude],
+    [initialRegion.latitude, initialRegion.longitude],
+  );
+  const initialZoom = React.useMemo(() => zoomFromRegion(initialRegion), [initialRegion]);
+  const markerData = React.useMemo(
+    () => markerFeatureCollection(markers, selectedMarkerId),
+    [markers, selectedMarkerId],
+  );
+  const userData = React.useMemo(() => userFeatureCollection(userLocation), [userLocation]);
+
+  React.useEffect(() => {
+    if (!cameraTarget) {
+      lastCameraTargetRef.current = null;
+      return;
+    }
+
+    const cameraTargetKey = `${cameraTarget.longitude}:${cameraTarget.latitude}`;
+    if (lastCameraTargetRef.current === cameraTargetKey) {
+      return;
+    }
+
+    lastCameraTargetRef.current = cameraTargetKey;
+    cameraRef.current?.easeTo({
+      center: [cameraTarget.longitude, cameraTarget.latitude],
+      duration: 320,
+      easing: 'ease',
+    });
+  }, [cameraTarget]);
+
+  const handleMarkerPress = React.useCallback(
+    (event: NativeSyntheticEvent<PressEventWithFeatures>) => {
+      const feature = event.nativeEvent.features?.[0];
+      const markerId = feature?.properties?.id;
+      if (typeof markerId === 'string') {
+        event.stopPropagation();
+        onSelectMarker(markerId);
+      }
+    },
+    [onSelectMarker],
+  );
 
   return (
     <View className="flex-1 bg-background">
@@ -81,64 +161,99 @@ export function DiscoverMap({
         onRegionDidChange={(event) => onRegionChangeComplete(regionFromViewState(event))}
         style={styles.map}>
         <Camera
-          center={centerCoordinate}
-          zoom={zoomFromRegion(initialRegion)}
-          duration={350}
-          easing="ease"
+          ref={cameraRef}
+          initialViewState={{
+            center: initialCenter,
+            zoom: initialZoom,
+          }}
         />
-        {markers.map((marker) => {
-          const selected = marker.id === selectedMarkerId;
-          return (
-            <Marker
-              key={marker.id}
-              id={marker.id}
-              lngLat={[marker.longitude, marker.latitude]}
-              anchor="bottom"
-              onPress={() => onSelectMarker(marker.id)}>
-              <Pressable
-                accessibilityLabel={marker.subtitle ? `${marker.title}, ${marker.subtitle}` : marker.title}
-                accessibilityRole="button"
-                onPress={() => onSelectMarker(marker.id)}
-                style={[
-                  styles.marker,
-                  selected ? styles.selectedMarker : styles.defaultMarker,
-                ]}>
-                <Beer size={16} color="#111111" strokeWidth={2.4} />
-              </Pressable>
-            </Marker>
-          );
-        })}
-        {userLocation ? (
-          <Marker
-            id="user-location"
-            lngLat={[userLocation.longitude, userLocation.latitude]}
-            anchor="center">
-            <View style={styles.userMarker}>
-              <UserRound size={15} color="#111111" strokeWidth={2.5} />
-            </View>
-          </Marker>
-        ) : null}
+
+        <GeoJSONSource
+          id="club-markers"
+          data={markerData}
+          hitbox={{ top: 16, right: 16, bottom: 16, left: 16 }}
+          onPress={handleMarkerPress}>
+          <Layer
+            id="club-marker-shadow"
+            type="circle"
+            paint={{
+              'circle-radius': ['case', ['get', 'selected'], 18, 15],
+              'circle-color': 'rgba(0, 0, 0, 0.28)',
+              'circle-blur': 0.9,
+              'circle-translate': [0, 3],
+            }}
+          />
+          <Layer
+            id="club-marker-fill"
+            type="circle"
+            paint={{
+              'circle-radius': ['case', ['get', 'selected'], 15, 13],
+              'circle-color': ['case', ['get', 'selected'], colors.primary, '#ffffff'],
+              'circle-stroke-color': ['case', ['get', 'selected'], colors.primaryForeground, 'rgba(17,17,17,0.18)'],
+              'circle-stroke-width': ['case', ['get', 'selected'], 2, 1],
+            }}
+          />
+          <Layer
+            id="club-marker-dot"
+            type="circle"
+            paint={{
+              'circle-radius': ['case', ['get', 'selected'], 5, 4],
+              'circle-color': colors.primaryForeground,
+              'circle-opacity': 0.92,
+            }}
+          />
+        </GeoJSONSource>
+
+        <GeoJSONSource id="user-location-source" data={userData}>
+          <Layer
+            id="user-location-outer"
+            type="circle"
+            paint={{
+              'circle-radius': 16,
+              'circle-color': colors.primary,
+              'circle-stroke-color': colors.primaryForeground,
+              'circle-stroke-width': 2,
+            }}
+          />
+          <Layer
+            id="user-location-inner"
+            type="circle"
+            paint={{
+              'circle-radius': 5,
+              'circle-color': colors.primaryForeground,
+            }}
+          />
+        </GeoJSONSource>
       </Map>
 
       <View style={styles.mapControls}>
         <Pressable
           accessibilityLabel="Karte auf eigenen Standort zentrieren"
           accessibilityRole="button"
+          android_ripple={{ color: colors.secondary }}
           onPress={onCenterUserLocation}
-          style={styles.controlButton}>
-          <LocateFixed size={20} color="#111111" strokeWidth={2.4} />
+          style={({ pressed }) => [
+            styles.controlButton,
+            {
+              backgroundColor: pressed ? colors.secondary : colors.card,
+            },
+          ]}>
+          <LocateFixed size={20} color={colors.foreground} strokeWidth={2.4} />
         </Pressable>
 
         <Pressable
           accessibilityLabel="Nur heute offene Clubs anzeigen"
           accessibilityRole="button"
+          android_ripple={{ color: openTodayOnly ? colors.primary : colors.secondary }}
           onPress={onToggleOpenToday}
-          style={[
+          style={({ pressed }) => [
             styles.filterButton,
-            openTodayOnly ? styles.filterButtonActive : styles.filterButtonInactive,
+            {
+              backgroundColor: openTodayOnly ? colors.primary : pressed ? colors.secondary : colors.card,
+            },
           ]}>
-          <CalendarCheck2 size={17} color="#111111" strokeWidth={2.4} />
-          <Text style={styles.filterButtonText}>Heute offen</Text>
+          <CalendarCheck2 size={17} color={colors.primaryForeground} strokeWidth={2.4} />
+          <Text style={[styles.filterButtonText, { color: colors.primaryForeground }]}>Heute offen</Text>
         </Pressable>
       </View>
     </View>
@@ -148,39 +263,6 @@ export function DiscoverMap({
 const styles = StyleSheet.create({
   map: {
     ...StyleSheet.absoluteFillObject,
-  },
-  marker: {
-    alignItems: 'center',
-    borderRadius: MARKER_SIZE / 2,
-    elevation: 6,
-    height: MARKER_SIZE,
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.28,
-    shadowRadius: 5,
-    width: MARKER_SIZE,
-  },
-  defaultMarker: {
-    backgroundColor: '#ffffff',
-  },
-  selectedMarker: {
-    backgroundColor: '#f4d63d',
-  },
-  userMarker: {
-    alignItems: 'center',
-    backgroundColor: '#f4d63d',
-    borderColor: '#111111',
-    borderRadius: USER_MARKER_SIZE / 2,
-    borderWidth: 2,
-    elevation: 8,
-    height: USER_MARKER_SIZE,
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.32,
-    shadowRadius: 5,
-    width: USER_MARKER_SIZE,
   },
   mapControls: {
     alignItems: 'center',
@@ -192,7 +274,6 @@ const styles = StyleSheet.create({
   },
   controlButton: {
     alignItems: 'center',
-    backgroundColor: '#ffffff',
     borderRadius: 22,
     elevation: 7,
     height: 44,
@@ -217,14 +298,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.24,
     shadowRadius: 5,
   },
-  filterButtonActive: {
-    backgroundColor: '#f4d63d',
-  },
-  filterButtonInactive: {
-    backgroundColor: '#ffffff',
-  },
   filterButtonText: {
-    color: '#111111',
     fontSize: 12,
     fontWeight: '700',
   },
