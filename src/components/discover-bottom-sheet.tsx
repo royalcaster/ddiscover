@@ -3,6 +3,7 @@ import { Building2, CalendarClock, ExternalLink, GripHorizontal, Heart, MapPin, 
 import React from 'react';
 import {
   Animated,
+  Image as NativeImage,
   PanResponder,
   Pressable,
   ScrollView,
@@ -34,6 +35,7 @@ type DiscoverSheetEvent = {
   title: string;
   startsAt: number;
   locationName?: string;
+  imageUrl?: string | null;
   sourceUrl?: string;
 };
 
@@ -349,8 +351,16 @@ export function DiscoverBottomSheet({
                       android_ripple={{ color: rippleColor }}
                       className="flex-row gap-3 rounded-[16px] border border-border bg-background px-3 py-3"
                       onPress={() => onOpenEvent(event._id)}>
-                      <View className="h-11 w-11 items-center justify-center rounded-full bg-secondary">
-                        <Music2 size={18} color={colors.foreground} />
+                      <View className="h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-secondary">
+                        {event.imageUrl ? (
+                          <NativeImage
+                            source={{ uri: event.imageUrl }}
+                            resizeMode="cover"
+                            style={styles.eventThumbnail}
+                          />
+                        ) : (
+                          <Music2 size={18} color={colors.foreground} />
+                        )}
                       </View>
                       <View className="min-w-0 flex-1 gap-1">
                         <View className="flex-row items-center gap-2">
@@ -417,5 +427,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
+  },
+  eventThumbnail: {
+    height: '100%',
+    width: '100%',
   },
 });
