@@ -34,7 +34,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         const focused = state.routes[state.index]?.key === route.key;
         const descriptor = descriptors[route.key];
-        const iconColor = focused ? colors.primaryForeground : colors.mutedForeground;
+        const iconColor = focused ? colors.foreground : colors.mutedForeground;
         const labelColor = focused ? colors.foreground : colors.mutedForeground;
 
         return (
@@ -65,7 +65,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               styles.tabItem,
               focused
                 ? {
-                    backgroundColor: colors.primary,
+                    backgroundColor: colors.secondary,
                   }
                 : null,
               pressed && !focused

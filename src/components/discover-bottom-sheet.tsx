@@ -251,8 +251,8 @@ export function DiscoverBottomSheet({
                   onPress={() => onToggleClubFavorite(selectedClub._id)}>
                   <Heart
                     size={20}
-                    color={clubFavorited ? colors.primary : colors.foreground}
-                    fill={clubFavorited ? colors.primary : 'transparent'}
+                    color={colors.foreground}
+                    fill={clubFavorited ? colors.foreground : 'transparent'}
                   />
                 </Pressable>
               </View>
