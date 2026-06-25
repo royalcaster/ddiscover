@@ -64,6 +64,11 @@ function inspectConvexError(error: unknown) {
   };
 }
 
+/**
+ * Runs a public Convex query through the HTTP client instead of the realtime
+ * React client. This keeps guest-facing reads working in standalone APKs where
+ * the websocket/auth setup can differ from local dev builds.
+ */
 export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
   query: Query,
   args: FunctionArgs<Query> | null,

@@ -63,6 +63,13 @@ function deterministicOffset(seed: string) {
   return { latOffset, lngOffset };
 }
 
+/**
+ * Resolves the coordinate shown on the discovery map for a club.
+ *
+ * Reviewed Convex coordinates win first, curated MVP fallbacks are second, and
+ * a deterministic Dresden-area offset is used last so unknown clubs never all
+ * collapse onto one marker.
+ */
 export function resolveClubCoordinates(
   slug: string,
   latitude?: number,

@@ -1,17 +1,17 @@
 import type { Id } from '../../../convex/_generated/dataModel';
 import * as Location from 'expo-location';
 import React from 'react';
-import { Alert, Linking, View } from 'react-native';
+import { Alert, Animated, Linking, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api } from '../../../convex/_generated/api';
-import { DiscoverBottomSheet } from '@/components/discover-bottom-sheet';
+import { DiscoverBottomSheet, getDiscoverSheetMetrics } from '@/components/discover-bottom-sheet';
 import { DiscoverMap } from '@/components/discover-map';
 import { useFavorites } from '@/hooks/use-favorites';
 import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { resolveClubCoordinates, DRESDEN_CENTER } from '@/lib/club-locations';
 import type { MapRegion } from '@/lib/map-types';
-import { openEventDetail } from '@/lib/navigation';
+import { openCalendar, openEventDetail } from '@/lib/navigation';
 
 type MarkerItem = {
   id: string;
@@ -39,6 +39,7 @@ function toLocalDayKey(timestamp: number) {
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
   const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
@@ -97,6 +98,13 @@ export default function DiscoverScreen() {
 
   const selectedMarker = selectedMarkerId ? markerById.get(selectedMarkerId) : null;
   const selectedClub = selectedMarker ? clubs.find((club) => club._id === selectedMarker.clubId) ?? null : null;
+  const sheetMetrics = React.useMemo(
+    () => getDiscoverSheetMetrics(height, Boolean(selectedClub)),
+    [height, selectedClub],
+  );
+  const sheetTranslateY = React.useRef(
+    new Animated.Value(sheetMetrics.snapPoints.collapsed),
+  ).current;
   const mapMarkers = React.useMemo(
     () =>
       markers.map((marker) => ({
@@ -160,6 +168,8 @@ export default function DiscoverScreen() {
         cameraTarget={cameraTarget}
         initialRegion={INITIAL_REGION}
         openTodayOnly={openTodayOnly}
+        sheetMaxHeight={sheetMetrics.maxSheetHeight}
+        sheetTranslateY={sheetTranslateY}
         onRegionChangeComplete={handleRegionChangeComplete}
         onSelectMarker={(markerId) => {
           setCameraTarget(null);
@@ -177,6 +187,8 @@ export default function DiscoverScreen() {
         isLoading={clubsQuery.isLoading || eventsQuery.isLoading}
         errorMessage={clubsQuery.error?.message ?? eventsQuery.error?.message ?? null}
         bottomInset={Math.max(insets.bottom, 8)}
+        metrics={sheetMetrics}
+        translateY={sheetTranslateY}
         isClubFavorited={favorites.isClubFavorited}
         isEventFavorited={favorites.isEventFavorited}
         onToggleClubFavorite={(clubId) =>
@@ -193,6 +205,7 @@ export default function DiscoverScreen() {
         }
         onOpenEvent={openEventDetail}
         onOpenSource={openSource}
+        onSeeAllEvents={openCalendar}
       />
     </View>
   );

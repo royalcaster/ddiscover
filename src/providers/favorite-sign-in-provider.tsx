@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { LogIn, X } from 'lucide-react-native';
 import React, { createContext, useContext, type PropsWithChildren } from 'react';
-import { Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, TouchableNativeFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
@@ -13,9 +13,35 @@ type FavoriteSignInContextValue = {
 
 const FavoriteSignInContext = createContext<FavoriteSignInContextValue | null>(null);
 
+const MODAL_COLORS = {
+  light: {
+    card: '#ffffff',
+    border: 'rgba(17,17,17,0.12)',
+    foreground: '#111111',
+    muted: '#66615a',
+    secondary: '#f2f2f2',
+    primary: '#f4d64d',
+    primaryForeground: '#111111',
+    ripple: 'rgba(0,0,0,0.08)',
+    primaryRipple: 'rgba(0,0,0,0.12)',
+  },
+  dark: {
+    card: '#151512',
+    border: 'rgba(255,255,255,0.14)',
+    foreground: '#f5f0df',
+    muted: '#b4ada3',
+    secondary: '#24231f',
+    primary: '#f4d64d',
+    primaryForeground: '#111111',
+    ripple: 'rgba(255,255,255,0.12)',
+    primaryRipple: 'rgba(0,0,0,0.14)',
+  },
+} as const;
+
 export function FavoriteSignInProvider({ children }: PropsWithChildren) {
   const router = useRouter();
-  const { colors } = useAppTheme();
+  const { resolvedTheme } = useAppTheme();
+  const modalColors = MODAL_COLORS[resolvedTheme];
   const insets = useSafeAreaInsets();
   const [visible, setVisible] = React.useState(false);
   const progress = React.useRef(new Animated.Value(0)).current;
@@ -68,8 +94,8 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
             style={[
               styles.dialog,
               {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
+                backgroundColor: modalColors.card,
+                borderColor: modalColors.border,
                 opacity: progress,
                 transform: [
                   {
@@ -88,58 +114,67 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
               },
             ]}>
             <View style={styles.dialogHeader}>
-              <View style={[styles.iconBadge, { backgroundColor: colors.primary }]}>
-                <LogIn size={22} color={colors.primaryForeground} strokeWidth={2.6} />
+              <View style={[styles.iconBadge, { backgroundColor: modalColors.primary }]}>
+                <LogIn size={22} color={modalColors.primaryForeground} strokeWidth={2.6} />
               </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Dialog schliessen"
-                android_ripple={{ color: colors.secondary, borderless: true }}
-                onPress={hide}
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  { backgroundColor: pressed ? colors.secondary : 'transparent' },
-                ]}>
-                <X size={20} color={colors.mutedForeground} strokeWidth={2.4} />
-              </Pressable>
+              <View style={styles.closeClip}>
+                <TouchableNativeFeedback
+                  accessibilityRole="button"
+                  accessibilityLabel="Dialog schließen"
+                  background={TouchableNativeFeedback.Ripple(modalColors.ripple, true)}
+                  onPress={hide}
+                  useForeground>
+                  <View style={styles.closeButton}>
+                    <X size={20} color={modalColors.muted} strokeWidth={2.4} />
+                  </View>
+                </TouchableNativeFeedback>
+              </View>
             </View>
 
             <View style={styles.dialogCopy}>
-              <Text className="text-xl font-bold text-foreground">Anmeldung erforderlich</Text>
-              <Text className="text-muted-foreground text-sm leading-5">
+              <Text style={{ color: modalColors.foreground }} className="text-xl font-bold">
+                Anmeldung erforderlich
+              </Text>
+              <Text style={{ color: modalColors.muted }} className="text-sm leading-5">
                 Melde dich mit deinem Google Konto an, um Clubs und Events in deinen Favoriten zu speichern.
               </Text>
             </View>
 
             <View style={styles.actions}>
-              <Pressable
-                accessibilityRole="button"
-                android_ripple={{ color: colors.secondary }}
-                onPress={hide}
-                style={({ pressed }) => [
+              <View
+                style={[
                   styles.secondaryAction,
                   {
-                    backgroundColor: pressed ? colors.secondary : colors.background,
-                    borderColor: colors.border,
+                    backgroundColor: modalColors.secondary,
+                    borderColor: modalColors.border,
                   },
                 ]}>
-                <Text className="text-sm font-semibold text-foreground">Abbrechen</Text>
-              </Pressable>
+                <TouchableNativeFeedback
+                  accessibilityRole="button"
+                  background={TouchableNativeFeedback.Ripple(modalColors.ripple, false)}
+                  onPress={hide}
+                  useForeground>
+                  <View style={styles.actionContent}>
+                    <Text style={{ color: modalColors.foreground }} className="text-sm font-semibold">
+                      Abbrechen
+                    </Text>
+                  </View>
+                </TouchableNativeFeedback>
+              </View>
 
-              <Pressable
-                accessibilityRole="button"
-                android_ripple={{ color: colors.primary }}
-                onPress={openProfile}
-                style={({ pressed }) => [
-                  styles.primaryAction,
-                  {
-                    backgroundColor: pressed ? colors.ring : colors.primary,
-                  },
-                ]}>
-                <Text style={{ color: colors.primaryForeground }} className="text-sm font-bold">
-                  Zum Profil
-                </Text>
-              </Pressable>
+              <View style={[styles.primaryAction, { backgroundColor: modalColors.primary }]}>
+                <TouchableNativeFeedback
+                  accessibilityRole="button"
+                  background={TouchableNativeFeedback.Ripple(modalColors.primaryRipple, false)}
+                  onPress={openProfile}
+                  useForeground>
+                  <View style={styles.actionContent}>
+                    <Text style={{ color: modalColors.primaryForeground }} className="text-sm font-bold">
+                      Zum Profil
+                    </Text>
+                  </View>
+                </TouchableNativeFeedback>
+              </View>
             </View>
           </Animated.View>
         </Animated.View>
@@ -172,9 +207,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    borderRadius: 18,
     height: 36,
     justifyContent: 'center',
+    width: 36,
+  },
+  closeClip: {
+    borderRadius: 18,
+    height: 36,
+    overflow: 'hidden',
     width: 36,
   },
   dialog: {
@@ -206,18 +246,21 @@ const styles = StyleSheet.create({
     width: 42,
   },
   primaryAction: {
-    alignItems: 'center',
     borderRadius: 16,
     flex: 1,
     height: 48,
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   secondaryAction: {
-    alignItems: 'center',
     borderRadius: 16,
     borderWidth: 1,
     flex: 1,
     height: 48,
+    overflow: 'hidden',
+  },
+  actionContent: {
+    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
   },
 });

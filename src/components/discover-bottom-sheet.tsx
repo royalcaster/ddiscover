@@ -6,10 +6,8 @@ import {
   Image as NativeImage,
   PanResponder,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from 'react-native';
 
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +19,8 @@ const COLLAPSED_CLUB_SUMMARY_HEIGHT = 122;
 const COLLAPSED_EMPTY_HEIGHT = 112;
 
 type SheetSnapState = 'collapsed' | 'half' | 'expanded';
+
+type DiscoverSheetMetrics = ReturnType<typeof getDiscoverSheetMetrics>;
 
 type DiscoverSheetClub = {
   _id: Id<'clubs'>;
@@ -45,12 +45,15 @@ type DiscoverBottomSheetProps = {
   isLoading?: boolean;
   errorMessage?: string | null;
   bottomInset: number;
+  metrics: DiscoverSheetMetrics;
+  translateY: Animated.Value;
   isClubFavorited: (clubId: Id<'clubs'>) => boolean;
   isEventFavorited: (eventId: Id<'events'>) => boolean;
   onToggleClubFavorite: (clubId: Id<'clubs'>) => void;
   onToggleEventFavorite: (eventId: Id<'events'>) => void;
   onOpenEvent: (eventId: Id<'events'>) => void;
   onOpenSource: (url?: string) => void;
+  onSeeAllEvents: () => void;
 };
 
 function formatDateTime(timestamp: number) {
@@ -63,47 +66,61 @@ function formatDateTime(timestamp: number) {
   }).format(new Date(timestamp));
 }
 
+/**
+ * Calculates stable bottom-sheet dimensions and snap points for the Discover
+ * map. Sharing these metrics with the map lets floating controls follow the
+ * drawer without duplicating layout math.
+ */
+export function getDiscoverSheetMetrics(screenHeight: number, hasSelectedClub: boolean) {
+  const maxSheetHeight = Math.min(screenHeight * 0.78, 680);
+  const collapsedHeight = hasSelectedClub
+    ? Math.min(maxSheetHeight - 24, COLLAPSED_CLUB_SUMMARY_HEIGHT)
+    : COLLAPSED_EMPTY_HEIGHT;
+
+  return {
+    maxSheetHeight,
+    collapsedHeight,
+    snapPoints: {
+      expanded: 0,
+      half: Math.max(0, maxSheetHeight * 0.38),
+      collapsed: Math.max(0, maxSheetHeight - collapsedHeight),
+    },
+  };
+}
+
 export function DiscoverBottomSheet({
   selectedClub,
   events,
   isLoading = false,
   errorMessage = null,
   bottomInset,
+  metrics,
+  translateY,
   isClubFavorited,
   isEventFavorited,
   onToggleClubFavorite,
   onToggleEventFavorite,
   onOpenEvent,
   onOpenSource,
+  onSeeAllEvents,
 }: DiscoverBottomSheetProps) {
   const { colors, resolvedTheme } = useAppTheme();
-  const { height } = useWindowDimensions();
-  const maxSheetHeight = Math.min(height * 0.78, 680);
-  const collapsedHeight = selectedClub
-    ? Math.min(maxSheetHeight - 24, COLLAPSED_CLUB_SUMMARY_HEIGHT)
-    : COLLAPSED_EMPTY_HEIGHT;
-  const snapPoints = React.useMemo(
-    () => ({
-      expanded: 0,
-      half: Math.max(0, maxSheetHeight * 0.38),
-      collapsed: Math.max(0, maxSheetHeight - collapsedHeight),
-    }),
-    [collapsedHeight, maxSheetHeight],
-  );
-  const translateY = React.useRef(new Animated.Value(snapPoints.collapsed)).current;
+  const { maxSheetHeight, snapPoints } = metrics;
   const dragStartY = React.useRef(snapPoints.collapsed);
   const currentTranslateY = React.useRef(snapPoints.collapsed);
-  const scrollOffsetY = React.useRef(0);
-  const [snapState, setSnapState] = React.useState<SheetSnapState>('collapsed');
+  const dragBaselineReady = React.useRef(true);
+  const [, setSnapState] = React.useState<SheetSnapState>('collapsed');
   const nextEvent = events[0] ?? null;
+  const maxVisibleEventRows = maxSheetHeight >= 620 ? 2 : maxSheetHeight >= 540 ? 1 : 0;
+  const additionalEvents = events.slice(1);
+  const listedEvents = additionalEvents.slice(0, maxVisibleEventRows);
+  const hiddenEventCount = Math.max(0, additionalEvents.length - listedEvents.length);
   const clubFavorited = selectedClub ? isClubFavorited(selectedClub._id) : false;
   const sheetBackgroundColor = resolvedTheme === 'light' ? 'hsl(0 0% 97%)' : colors.card;
   const rippleColor = resolvedTheme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
-  const scrollEnabled = snapState === 'expanded';
 
   const animateTo = React.useCallback(
     (toValue: number, nextState?: SheetSnapState) => {
-      currentTranslateY.current = toValue;
       if (nextState) {
         setSnapState(nextState);
       }
@@ -113,10 +130,25 @@ export function DiscoverBottomSheet({
         damping: 26,
         stiffness: 230,
         mass: 0.9,
-      }).start();
+      }).start(({ finished }) => {
+        if (finished) {
+          currentTranslateY.current = toValue;
+          dragStartY.current = toValue;
+        }
+      });
     },
     [translateY],
   );
+
+  React.useEffect(() => {
+    const listenerId = translateY.addListener(({ value }) => {
+      currentTranslateY.current = value;
+    });
+
+    return () => {
+      translateY.removeListener(listenerId);
+    };
+  }, [translateY]);
 
   React.useEffect(() => {
     animateTo(snapPoints.collapsed, 'collapsed');
@@ -142,7 +174,7 @@ export function DiscoverBottomSheet({
         return true;
       }
 
-      return dy > 0 && scrollOffsetY.current <= 1;
+      return dy > 0;
     },
     [snapPoints.expanded],
   );
@@ -155,12 +187,19 @@ export function DiscoverBottomSheet({
         onMoveShouldSetPanResponderCapture: (_, gestureState) =>
           shouldDragSheet(gestureState.dy, gestureState.dx),
         onPanResponderGrant: () => {
+          dragBaselineReady.current = false;
+          dragStartY.current = currentTranslateY.current;
           translateY.stopAnimation((value) => {
             dragStartY.current = value;
             currentTranslateY.current = value;
+            dragBaselineReady.current = true;
           });
         },
         onPanResponderMove: (_, gestureState) => {
+          if (!dragBaselineReady.current) {
+            return;
+          }
+
           const nextTranslateY = Math.min(
             snapPoints.collapsed,
             Math.max(0, dragStartY.current + gestureState.dy),
@@ -169,11 +208,13 @@ export function DiscoverBottomSheet({
           translateY.setValue(nextTranslateY);
         },
         onPanResponderRelease: (_, gestureState) => {
+          dragBaselineReady.current = true;
           const projectedY = currentTranslateY.current + gestureState.vy * 120;
           const nextState = nearestSnap(projectedY);
           animateTo(snapPoints[nextState], nextState);
         },
         onPanResponderTerminate: () => {
+          dragBaselineReady.current = true;
           const nextState = nearestSnap(currentTranslateY.current);
           animateTo(snapPoints[nextState], nextState);
         },
@@ -200,23 +241,13 @@ export function DiscoverBottomSheet({
       </View>
 
       {selectedClub ? (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={scrollEnabled}
-          nestedScrollEnabled
-          contentContainerStyle={{ paddingBottom: bottomInset + 22 }}
-          onScroll={(event) => {
-            scrollOffsetY.current = event.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
-          className="px-4">
-          <View className="gap-4">
+        <View className="gap-4 px-4" style={{ paddingBottom: bottomInset + 22 }}>
             <View className="flex-row items-start justify-between gap-3">
               <View className="min-w-0 flex-1 gap-2">
                 <View className="flex-row items-center gap-2">
                   <Badge variant="secondary" className="rounded-full px-2.5 py-1">
                     <Building2 size={12} color={colors.foreground} />
-                    <Text>Club</Text>
+                    <Text>Studentenclub</Text>
                   </Badge>
                   <Text className="text-muted-foreground text-xs font-medium">
                     {events.length} {events.length === 1 ? 'Event' : 'Events'}
@@ -247,7 +278,11 @@ export function DiscoverBottomSheet({
 
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={clubFavorited ? 'Club aus Favoriten entfernen' : 'Club speichern'}
+                  accessibilityLabel={
+                    clubFavorited
+                      ? 'Studentenclub aus Favoriten entfernen'
+                      : 'Studentenclub speichern'
+                  }
                   android_ripple={{ color: rippleColor, borderless: true }}
                   className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
                   onPress={() => onToggleClubFavorite(selectedClub._id)}>
@@ -288,7 +323,7 @@ export function DiscoverBottomSheet({
                 </Pressable>
               ) : (
                 <Text className="text-muted-foreground text-sm">
-                  Keine bevorstehenden Events für diesen Club.
+                  Keine bevorstehenden Events für diesen Studentenclub.
                 </Text>
               )}
             </View>
@@ -338,12 +373,12 @@ export function DiscoverBottomSheet({
 
             <View className="gap-2 pt-2">
               <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-semibold text-foreground">Events in diesem Club</Text>
-                <Text className="text-muted-foreground text-sm">{events.length}</Text>
+                <Text className="text-lg font-semibold text-foreground">Weitere Events</Text>
+                <Text className="text-muted-foreground text-sm">{additionalEvents.length}</Text>
               </View>
 
-              {events.length > 0 ? (
-                events.map((event) => {
+              {listedEvents.length > 0 ? (
+                listedEvents.map((event) => {
                   const favorited = isEventFavorited(event._id);
                   return (
                     <Pressable
@@ -395,24 +430,37 @@ export function DiscoverBottomSheet({
                   );
                 })
               ) : (
-                <View className="rounded-[16px] border border-border bg-background px-3 py-5">
-                  <Text className="text-muted-foreground text-sm">
-                    Dieser Club hat aktuell keine importierten kommenden Events.
-                  </Text>
-                </View>
+                hiddenEventCount === 0 ? (
+                  <View className="rounded-[16px] border border-border bg-background px-3 py-5">
+                    <Text className="text-muted-foreground text-sm">
+                      Keine weiteren importierten Events.
+                    </Text>
+                  </View>
+                ) : null
               )}
+
+              {hiddenEventCount > 0 ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  android_ripple={{ color: rippleColor }}
+                  className="rounded-full"
+                  onPress={onSeeAllEvents}>
+                  <CalendarClock size={14} color="#ffffff" />
+                  <Text>Alle Events ansehen ({hiddenEventCount} mehr)</Text>
+                </Button>
+              ) : null}
             </View>
           </View>
-        </ScrollView>
       ) : (
         <View className="gap-2 px-5 pb-8">
           <Text className="text-lg font-semibold text-foreground">
-            {isLoading ? 'Clubs werden geladen...' : 'Keine Clubs verfügbar'}
+            {isLoading ? 'Studentenclubs werden geladen...' : 'Keine Studentenclubs verfügbar'}
           </Text>
           <Text className="text-muted-foreground text-sm">
             {errorMessage
               ? `Convex konnte nicht geladen werden: ${errorMessage}`
-              : 'Sobald Clubs geladen sind, erscheint hier die Club- und Eventübersicht.'}
+              : 'Aktuell zeigen wir Studentenclubs. Weitere Ort-Kategorien folgen.'}
           </Text>
         </View>
       )}

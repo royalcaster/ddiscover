@@ -1,7 +1,7 @@
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useAction } from 'convex/react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, CalendarClock, ExternalLink, Globe2, Heart, MapPin, Music2, Navigation, Route, Share2 } from 'lucide-react-native';
+import { ArrowLeft, CalendarClock, ExternalLink, Footprints, Globe2, Heart, MapPin, Music2, Navigation, Route, Share2 } from 'lucide-react-native';
 import React from 'react';
 import { Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -74,7 +74,7 @@ function inferGenre(title: string) {
   if (normalized.includes('house')) return 'House';
   if (normalized.includes('karaoke')) return 'Karaoke';
   if (normalized.includes('quiz')) return 'Quiz';
-  return 'Club Event';
+  return 'Studentenclub Event';
 }
 
 type DvbRouteResult =
@@ -117,6 +117,14 @@ type DvbRouteResult =
         }[];
       }[];
     };
+
+type DvbRouteLeg = Extract<DvbRouteResult, { status: 'ok' }>['trips'][number]['legs'][number];
+
+function isWalkingLeg(leg: DvbRouteLeg) {
+  const mode = leg.mode?.toLowerCase() ?? '';
+  const line = leg.line.toLowerCase();
+  return mode.includes('walk') || mode.includes('foot') || line.includes('fuss') || line.includes('fuß');
+}
 
 type DvbRoutePlannerProps = {
   destinationAddress: string;
@@ -222,9 +230,17 @@ function DvbRoutePlanner({
                 </View>
                 <View className="gap-2">
                   {trip.legs.map((leg, legIndex) => (
-                    <View key={`${leg.line}-${legIndex}`} className="flex-row gap-2">
-                      <View className="min-w-[46px] items-center rounded-full bg-primary px-2 py-1">
-                        <Text className="text-xs font-bold text-primary-foreground">{leg.line || leg.mode || 'Fuss'}</Text>
+                    <View key={`${leg.line}-${legIndex}`} className="flex-row items-center gap-2">
+                      <View className="min-h-10 min-w-[42px] flex-row items-center justify-center rounded-full bg-primary px-2">
+                        {isWalkingLeg(leg) ? (
+                          <Footprints size={15} color={theme.primaryForeground} strokeWidth={2.5} />
+                        ) : (
+                          <Text
+                            className="text-center text-xs font-bold text-primary-foreground"
+                            style={{ lineHeight: 14 }}>
+                            {leg.line || leg.mode || 'Fuss'}
+                          </Text>
+                        )}
                       </View>
                       <View className="min-w-0 flex-1">
                         <Text className="text-sm font-semibold" numberOfLines={1}>
@@ -377,7 +393,7 @@ export default function EventDetailScreen() {
                   className="flex-row items-center justify-between gap-3 border-b border-border px-4 py-4"
                   onPress={() => void Linking.openURL(websiteUrl)}>
                   <View className="gap-1">
-                    <Text className="text-muted-foreground text-xs font-semibold uppercase">Club Website</Text>
+                    <Text className="text-muted-foreground text-xs font-semibold uppercase">Studentenclub Website</Text>
                     <Text className="text-sm font-semibold">{websiteUrl.replace(/^https?:\/\//, '')}</Text>
                   </View>
                   <Globe2 size={18} color={theme.mutedForeground} />

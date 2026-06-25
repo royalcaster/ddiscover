@@ -10,7 +10,13 @@ import {
   type ViewStateChangeEvent,
 } from '@maplibre/maplibre-react-native';
 import { CalendarCheck2, LocateFixed } from 'lucide-react-native';
-import { Pressable, StyleSheet, View, type NativeSyntheticEvent } from 'react-native';
+import {
+  Animated,
+  StyleSheet,
+  TouchableNativeFeedback,
+  View,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import type { MapRegion } from '@/lib/map-types';
 import { useAppTheme } from '@/providers/theme-provider';
@@ -25,11 +31,30 @@ const MAP_LAYER_COLORS = {
   markerIcon: '#111111',
   markerStroke: '#111111',
   selectedFill: '#f4d64d',
-  userFill: '#3b82f6',
-  userStroke: '#ffffff',
+  selectedStroke: '#111111',
+  userFill: '#f4d64d',
+  userInner: '#111111',
+  userStroke: '#111111',
 } as const;
 
-const CLUB_MARKER_ICON = require('../../assets/images/tabIcons/explore.png');
+const CLUB_MARKER_ICON = require('../../assets/images/map/beer.png');
+
+const CONTROL_COLORS = {
+  light: {
+    background: '#ffffff',
+    border: 'rgba(17,17,17,0.12)',
+    foreground: '#111111',
+    pressed: 'rgba(0,0,0,0.08)',
+    shadow: 'rgba(0,0,0,0.28)',
+  },
+  dark: {
+    background: '#181816',
+    border: 'rgba(255,255,255,0.12)',
+    foreground: '#f5f0df',
+    pressed: 'rgba(255,255,255,0.12)',
+    shadow: 'rgba(0,0,0,0.5)',
+  },
+} as const;
 
 type DiscoverMarker = {
   id: string;
@@ -46,6 +71,8 @@ type DiscoverMapProps = {
   cameraTarget: { latitude: number; longitude: number } | null;
   initialRegion: MapRegion;
   openTodayOnly: boolean;
+  sheetMaxHeight: number;
+  sheetTranslateY: Animated.Value;
   onRegionChangeComplete: (region: MapRegion) => void;
   onSelectMarker: (markerId: string) => void;
   onCenterUserLocation: () => void;
@@ -106,6 +133,49 @@ function userFeatureCollection(userLocation: DiscoverMapProps['userLocation']) {
   } as GeoJSON.FeatureCollection;
 }
 
+type MapControlButtonProps = {
+  accessibilityLabel: string;
+  children: React.ReactNode;
+  onPress: () => void;
+  selected?: boolean;
+  theme: keyof typeof CONTROL_COLORS;
+};
+
+function MapControlButton({
+  accessibilityLabel,
+  children,
+  onPress,
+  selected = false,
+  theme,
+}: MapControlButtonProps) {
+  const controlColors = CONTROL_COLORS[theme];
+  return (
+    <View
+      style={[
+        styles.controlClip,
+        {
+          backgroundColor: controlColors.background,
+          borderColor: selected ? controlColors.foreground : controlColors.border,
+          shadowColor: controlColors.shadow,
+        },
+      ]}>
+      <TouchableNativeFeedback
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        background={TouchableNativeFeedback.Ripple(controlColors.pressed, false)}
+        onPress={onPress}
+        useForeground>
+        <View style={styles.controlButton}>{children}</View>
+      </TouchableNativeFeedback>
+    </View>
+  );
+}
+
+/**
+ * Native MapLibre map used by the Discover screen. Club and user markers are
+ * rendered as map layers for smooth panning, while React Native controls stay
+ * above the bottom sheet through the shared animated sheet offset.
+ */
 export function DiscoverMap({
   markers,
   selectedMarkerId,
@@ -113,12 +183,15 @@ export function DiscoverMap({
   cameraTarget,
   initialRegion,
   openTodayOnly,
+  sheetMaxHeight,
+  sheetTranslateY,
   onRegionChangeComplete,
   onSelectMarker,
   onCenterUserLocation,
   onToggleOpenToday,
 }: DiscoverMapProps) {
-  const { colors, resolvedTheme } = useAppTheme();
+  const { resolvedTheme } = useAppTheme();
+  const controlColors = CONTROL_COLORS[resolvedTheme];
   const cameraRef = React.useRef<CameraRef>(null);
   const lastCameraTargetRef = React.useRef<string | null>(null);
   const selectedExpression = React.useMemo(
@@ -170,7 +243,7 @@ export function DiscoverMap({
   return (
     <View className="flex-1 bg-background">
       <Map
-        attributionPosition={{ top: 56, left: 8 }}
+        attribution={false}
         compass={false}
         logo={false}
         mapStyle={MAP_STYLES[resolvedTheme]}
@@ -184,7 +257,7 @@ export function DiscoverMap({
           }}
         />
 
-        <Images images={{ clubMarker: { source: CLUB_MARKER_ICON, sdf: true } }} />
+        <Images images={{ clubMarker: { source: CLUB_MARKER_ICON, sdf: false } }} />
 
         <GeoJSONSource
           id="club-markers"
@@ -195,8 +268,13 @@ export function DiscoverMap({
             id="club-marker-shadow"
             type="circle"
             paint={{
-              'circle-radius': ['case', selectedExpression, 19, 16],
-              'circle-color': 'rgba(0, 0, 0, 0.28)',
+              'circle-radius': 16,
+              'circle-color': [
+                'case',
+                selectedExpression,
+                'rgba(244, 214, 77, 0.4)',
+                'rgba(0, 0, 0, 0.24)',
+              ],
               'circle-blur': 0.9,
               'circle-translate': [0, 3],
             }}
@@ -205,15 +283,20 @@ export function DiscoverMap({
             id="club-marker-fill"
             type="circle"
             paint={{
-              'circle-radius': ['case', selectedExpression, 17, 15],
+              'circle-radius': 14,
               'circle-color': [
                 'case',
                 selectedExpression,
                 MAP_LAYER_COLORS.selectedFill,
                 MAP_LAYER_COLORS.markerFill,
               ],
-              'circle-stroke-color': MAP_LAYER_COLORS.markerStroke,
-              'circle-stroke-width': ['case', selectedExpression, 2.5, 1.5],
+              'circle-stroke-color': [
+                'case',
+                selectedExpression,
+                MAP_LAYER_COLORS.selectedStroke,
+                MAP_LAYER_COLORS.markerStroke,
+              ],
+              'circle-stroke-width': 1.5,
             }}
           />
           <Layer
@@ -223,15 +306,20 @@ export function DiscoverMap({
               'icon-allow-overlap': true,
               'icon-image': 'clubMarker',
               'icon-ignore-placement': true,
-              'icon-size': ['case', selectedExpression, 0.64, 0.56],
-            }}
-            paint={{
-              'icon-color': MAP_LAYER_COLORS.markerIcon,
+              'icon-size': 0.25,
             }}
           />
         </GeoJSONSource>
 
         <GeoJSONSource id="user-location-source" data={userData}>
+          <Layer
+            id="user-location-halo"
+            type="circle"
+            paint={{
+              'circle-radius': 23,
+              'circle-color': 'rgba(244, 214, 77, 0.24)',
+            }}
+          />
           <Layer
             id="user-location-outer"
             type="circle"
@@ -246,46 +334,41 @@ export function DiscoverMap({
             id="user-location-inner"
             type="circle"
             paint={{
-              'circle-radius': 5,
-              'circle-color': MAP_LAYER_COLORS.userStroke,
+              'circle-radius': 6,
+              'circle-color': MAP_LAYER_COLORS.userInner,
             }}
           />
         </GeoJSONSource>
       </Map>
 
-      <View style={styles.mapControls}>
-        <Pressable
+      <Animated.View
+        pointerEvents="box-none"
+        style={[
+          styles.mapControls,
+          {
+            bottom: sheetMaxHeight + 16,
+            transform: [{ translateY: sheetTranslateY }],
+          },
+        ]}>
+        <MapControlButton
           accessibilityLabel="Karte auf eigenen Standort zentrieren"
-          accessibilityRole="button"
-          android_ripple={{ color: colors.secondary }}
           onPress={onCenterUserLocation}
-          style={({ pressed }) => [
-            styles.controlButton,
-            {
-              backgroundColor: pressed ? colors.secondary : colors.card,
-            },
-          ]}>
-          <LocateFixed size={20} color={colors.foreground} strokeWidth={2.4} />
-        </Pressable>
+          theme={resolvedTheme}>
+          <LocateFixed size={22} color={controlColors.foreground} strokeWidth={2.5} />
+        </MapControlButton>
 
-        <Pressable
-          accessibilityLabel="Nur heute offene Clubs anzeigen"
-          accessibilityRole="button"
-          android_ripple={{ color: openTodayOnly ? colors.primary : colors.secondary }}
+        <MapControlButton
+          accessibilityLabel="Nur heute offene Studentenclubs anzeigen"
           onPress={onToggleOpenToday}
-          style={({ pressed }) => [
-            styles.filterButton,
-            {
-              backgroundColor: openTodayOnly ? colors.primary : pressed ? colors.secondary : colors.card,
-            },
-          ]}>
+          selected={openTodayOnly}
+          theme={resolvedTheme}>
           <CalendarCheck2
-            size={21}
-            color={openTodayOnly ? colors.primaryForeground : colors.foreground}
-            strokeWidth={2.4}
+            size={23}
+            color={controlColors.foreground}
+            strokeWidth={2.5}
           />
-        </Pressable>
-      </View>
+        </MapControlButton>
+      </Animated.View>
     </View>
   );
 }
@@ -298,32 +381,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 12,
     position: 'absolute',
-    bottom: 250,
     right: 16,
+  },
+  controlClip: {
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    elevation: 7,
+    height: 48,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    width: 48,
   },
   controlButton: {
     alignItems: 'center',
-    borderRadius: 22,
-    elevation: 7,
-    height: 44,
+    height: 48,
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.24,
-    shadowRadius: 5,
-    width: 44,
-  },
-  filterButton: {
-    alignItems: 'center',
-    borderRadius: 22,
-    elevation: 7,
-    height: 44,
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.24,
-    shadowRadius: 5,
-    width: 44,
+    width: 48,
   },
 });
 

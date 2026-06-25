@@ -2,7 +2,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Tabs } from 'expo-router';
 import { CalendarDays, Compass, UserRound } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableNativeFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
@@ -14,8 +14,28 @@ const VISIBLE_TABS = [
   { name: 'profile', label: 'Profil', Icon: UserRound },
 ] as const;
 
+const TAB_COLORS = {
+  light: {
+    background: '#ffffff',
+    border: 'rgba(17,17,17,0.08)',
+    activeBackground: '#f2f2f2',
+    foreground: '#111111',
+    muted: '#666666',
+    ripple: 'rgba(0,0,0,0.08)',
+  },
+  dark: {
+    background: '#000000',
+    border: 'rgba(255,255,255,0.08)',
+    activeBackground: '#1f1f1d',
+    foreground: '#f5f0df',
+    muted: '#a9a39a',
+    ripple: 'rgba(255,255,255,0.12)',
+  },
+} as const;
+
 function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors } = useAppTheme();
+  const { resolvedTheme } = useAppTheme();
+  const tabColors = TAB_COLORS[resolvedTheme];
   const insets = useSafeAreaInsets();
 
   return (
@@ -23,8 +43,8 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={[
         styles.tabBar,
         {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          backgroundColor: tabColors.background,
+          borderTopColor: tabColors.border,
           paddingBottom: Math.max(insets.bottom, 10),
         },
       ]}>
@@ -34,59 +54,56 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         const focused = state.routes[state.index]?.key === route.key;
         const descriptor = descriptors[route.key];
-        const iconColor = focused ? colors.foreground : colors.mutedForeground;
-        const labelColor = focused ? colors.foreground : colors.mutedForeground;
+        const iconColor = focused ? tabColors.foreground : tabColors.muted;
+        const labelColor = focused ? tabColors.foreground : tabColors.muted;
+        const activateTab = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!focused && !event.defaultPrevented) {
+            navigation.navigate(route.name, route.params);
+          }
+        };
 
         return (
-          <Pressable
+          <View
             key={route.key}
-            accessibilityRole="button"
-            accessibilityState={focused ? { selected: true } : undefined}
-            accessibilityLabel={descriptor.options.tabBarAccessibilityLabel ?? label}
-            android_ripple={{ color: colors.secondary, borderless: false }}
-            onPress={() => {
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-
-              if (!focused && !event.defaultPrevented) {
-                navigation.navigate(route.name, route.params);
-              }
-            }}
-            onLongPress={() => {
-              navigation.emit({
-                type: 'tabLongPress',
-                target: route.key,
-              });
-            }}
-            style={({ pressed }) => [
-              styles.tabItem,
-              focused
-                ? {
-                    backgroundColor: colors.secondary,
-                  }
-                : null,
-              pressed && !focused
-                ? {
-                    backgroundColor: colors.secondary,
-                  }
-                : null,
+            style={[
+              styles.tabClip,
+              focused ? { backgroundColor: tabColors.activeBackground } : null,
             ]}>
-            <Icon size={23} color={iconColor} strokeWidth={focused ? 2.8 : 2.3} />
-            <Text
-              numberOfLines={1}
-              style={[
-                styles.tabLabel,
-                {
-                  color: labelColor,
-                  fontWeight: focused ? '700' : '600',
-                },
-              ]}>
-              {label}
-            </Text>
-          </Pressable>
+            <TouchableNativeFeedback
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : undefined}
+              accessibilityLabel={descriptor.options.tabBarAccessibilityLabel ?? label}
+              background={TouchableNativeFeedback.Ripple(tabColors.ripple, false)}
+              onPress={activateTab}
+              onLongPress={() => {
+                navigation.emit({
+                  type: 'tabLongPress',
+                  target: route.key,
+                });
+              }}
+              useForeground>
+              <View style={styles.tabItem}>
+                <Icon size={23} color={iconColor} strokeWidth={focused ? 2.8 : 2.3} />
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.tabLabel,
+                    {
+                      color: labelColor,
+                      fontWeight: focused ? '700' : '600',
+                    },
+                  ]}>
+                  {label}
+                </Text>
+              </View>
+            </TouchableNativeFeedback>
+          </View>
         );
       })}
     </View>
@@ -94,7 +111,8 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function AppTabs() {
-  const { colors, resolvedTheme } = useAppTheme();
+  const { resolvedTheme } = useAppTheme();
+  const tabColors = TAB_COLORS[resolvedTheme];
 
   return (
     <Tabs
@@ -103,7 +121,7 @@ export default function AppTabs() {
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
-        sceneStyle: { backgroundColor: colors.background },
+        sceneStyle: { backgroundColor: tabColors.background },
       }}
       tabBar={(props) => <AppTabBar {...props} />}>
       <Tabs.Screen name="index" options={{ title: 'Entdecken' }} />
@@ -127,9 +145,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 10,
   },
+  tabClip: {
+    borderRadius: 26,
+    flex: 1,
+    minHeight: 56,
+    overflow: 'hidden',
+  },
   tabItem: {
     alignItems: 'center',
-    borderRadius: 26,
     flex: 1,
     gap: 4,
     justifyContent: 'center',

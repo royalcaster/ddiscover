@@ -1,5 +1,7 @@
 # DDiscover
 
+DDiscover is an HTW Dresden Mobile Networks APL project for discovering Dresden student club events on mobile. The current app focuses on a map-first discovery flow, a calendar of imported VDSC events, event detail pages with images and DVB route planning, guest-first browsing, and a Clerk-backed profile/auth shell for saved favorites.
+
 ## Development Notes
 
 ### Repository Documentation Rules
@@ -27,6 +29,7 @@
 - Auth UX: guest-first; Clerk prebuilt sign-in is embedded in the `Profil` tab, while core discovery remains usable without authentication.
 - Event ingestion: Convex imports the VDSC calendar feed from `https://events.vdsc.de/calendar.json`, scrapes one image per event when available, stores images in Convex Storage, and upserts events by source key. A Convex cron runs the import every 24 hours.
 - Geocoding pipeline: VDSC imports now enrich club/event coordinates via Nominatim lookup with a Convex `geocodingCache` table to avoid repeated external lookups.
+- Map and routes: MapLibre renders the native discovery map; event details can request DVB route plans through the Convex backend.
 - UI styling: React Native Reusables-compatible NativeWind setup with `components.json`, semantic light/dark tokens, and registry-backed UI primitives aligned to the design reference in `docs/design/`.
 
 ### Local Development
@@ -42,7 +45,15 @@
 - If the dev client is already installed and the emulator/device is already running, start only the Expo dev-client server with `npm run dev`.
 - For web-only checks, run `npm run web` while Convex is running.
 - Run backend and parser tests with `npm test`.
+- Run final code checks with `npx tsc --noEmit`, `npm run lint`, and `npm test`.
 - Stop stale Metro processes with `npm run dev:stop:all`; stop running emulators with `npm run emu:stop`.
+
+### Submission Documents
+
+- Learning Journal and AI appendix: `docs/development-diary.md`
+- Glossary / Glossar: `docs/glossary.md`
+- Final video plan: `docs/presentations/ddiscover-final-video-plan.md`
+- Final hand-in checklist: `docs/final-submission-checklist.md`
 
 ### Android Commands
 

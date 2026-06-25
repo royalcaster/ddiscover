@@ -38,7 +38,7 @@ export default function FavoritesScreen() {
         ))}
 
         <Button variant="secondary" className="rounded-full">
-          <Text>Weitere Clubs merken</Text>
+          <Text>Weitere Studentenclubs merken</Text>
         </Button>
       </View>
     </ScreenShell>

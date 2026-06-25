@@ -33,6 +33,7 @@ yarn-error.*
 .claude/skills/
 
 # local screenshots/debug captures
+/.artifacts/
 /ddiscover-screen*.png
 /emulator-screen.png
 /image.png

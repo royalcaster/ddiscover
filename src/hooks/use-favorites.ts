@@ -16,6 +16,13 @@ type ToggleFavoriteArgs =
       eventId: Id<'events'>;
     };
 
+/**
+ * Central favorite state facade used by screens and map actions.
+ *
+ * Favorites are intentionally disabled at the Convex mutation layer for the
+ * current APK submission until Clerk and Convex auth handoff is stable in
+ * standalone builds. The UI still routes signed-out users to the sign-in prompt.
+ */
 export function useFavorites() {
   const { isSignedIn } = useAuth();
   const { showSignInPrompt } = useFavoriteSignInPrompt();

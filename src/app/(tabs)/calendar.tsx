@@ -59,7 +59,7 @@ function inferGenre(title: string) {
   if (normalized.includes('house')) return 'House';
   if (normalized.includes('karaoke')) return 'Karaoke';
   if (normalized.includes('quiz')) return 'Quiz';
-  return 'Club Event';
+  return 'Studentenclub Event';
 }
 
 export default function CalendarScreen() {
@@ -170,7 +170,7 @@ export default function CalendarScreen() {
                       {event.title}
                     </Text>
                     <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-                      {club?.name ?? event.locationName ?? 'Club'}
+                      {club?.name ?? event.locationName ?? 'Studentenclub'}
                     </Text>
                     <Text className="text-muted-foreground/70 text-xs" numberOfLines={1}>
                       {inferGenre(event.title)}

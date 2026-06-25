@@ -44,13 +44,13 @@ export default function ClubsScreen() {
         <View className="gap-4">
           <View className="max-w-[620px] gap-3">
             <Badge variant="default">
-              <Text>Clubs</Text>
+              <Text>Student clubs</Text>
             </Badge>
             <Text variant="h1" className="text-left">
-              Canonical club profiles with event context
+              Canonical student club profiles with event context
             </Text>
             <Text variant="muted">
-              This is the first normalized discovery layer on top of the VDSC import. Each club card
+              This is the first normalized discovery layer on top of the VDSC import. Each student club card
               is backed by the canonical Convex model rather than raw feed strings.
             </Text>
           </View>
@@ -59,7 +59,7 @@ export default function ClubsScreen() {
             <Card className="min-w-[170px] flex-1">
               <CardHeader className="gap-1 pb-2">
                 <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                  Clubs loaded
+                  Student clubs loaded
                 </Text>
                 <Text className="text-4xl font-semibold">{clubs?.length ?? '...'}</Text>
               </CardHeader>
@@ -78,8 +78,8 @@ export default function ClubsScreen() {
         {clubsQuery.isLoading ? (
           <Card>
             <CardContent className="pt-4">
-              <Text variant="h4">Loading clubs</Text>
-              <Text variant="muted">Waiting for Convex to return the normalized club list.</Text>
+              <Text variant="h4">Loading student clubs</Text>
+              <Text variant="muted">Waiting for Convex to return the normalized student club list.</Text>
             </CardContent>
           </Card>
         ) : clubsQuery.error ? (
@@ -122,7 +122,7 @@ export default function ClubsScreen() {
                     <View className="flex-row items-start gap-2">
                       <Building2 size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
                       <Text variant="muted">
-                        {club.websiteUrl ? 'Club profile normalized from source metadata.' : 'Canonical club profile with normalized venue metadata.'}
+                        {club.websiteUrl ? 'Student club profile normalized from source metadata.' : 'Canonical student club profile with normalized venue metadata.'}
                       </Text>
                     </View>
 
@@ -156,7 +156,7 @@ export default function ClubsScreen() {
                       </Pressable>
                     ) : (
                       <View className="rounded-lg border border-border bg-secondary p-3">
-                        <Text variant="muted">No upcoming event is currently linked to this club.</Text>
+                        <Text variant="muted">No upcoming event is currently linked to this student club.</Text>
                       </View>
                     )}
                   </View>

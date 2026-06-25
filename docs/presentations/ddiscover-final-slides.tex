@@ -1,0 +1,376 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% Compile from the repository root or from docs/presentations:
+%   pdflatex -interaction=nonstopmode -output-directory docs/presentations docs/presentations/ddiscover-final-slides.tex
+% Run twice if page numbers or references need a second pass.
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{helvet}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usetikzlibrary{calc,positioning,shapes.geometric}
+\graphicspath{{docs/design/}{../design/}{assets/images/}{../../assets/images/}}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\setbeamersize{text margin left=0mm,text margin right=0mm}
+
+% App-inspired palette.
+\definecolor{AppBg}{HTML}{080806}
+\definecolor{AppCard}{HTML}{171714}
+\definecolor{AppCardSoft}{HTML}{22221D}
+\definecolor{AppText}{HTML}{F5F0DF}
+\definecolor{AppMuted}{HTML}{B2AA9B}
+\definecolor{AppMuted2}{HTML}{787266}
+\definecolor{AppYellow}{HTML}{F4D64D}
+\definecolor{AppInk}{HTML}{10100E}
+\definecolor{AppLine}{HTML}{3B382F}
+\definecolor{AppCyan}{HTML}{78B7C9}
+\definecolor{AppGreen}{HTML}{7AC295}
+\definecolor{AppOrange}{HTML}{D98B4A}
+\definecolor{AppRed}{HTML}{D66A55}
+
+\setbeamercolor{normal text}{fg=AppText,bg=AppBg}
+\setbeamercolor{frametitle}{fg=AppText,bg=AppBg}
+\setbeamercolor{structure}{fg=AppYellow}
+\setbeamerfont{frametitle}{series=\bfseries,size=\Large}
+\setbeamerfont{normal text}{size=\small}
+
+\newcommand{\DeckTitle}{DDiscover}
+\newcommand{\DeckSubtitle}{A mobile app for Dresden student club events}
+\newcommand{\RepoPath}{C:/Users/klaus/Documents/GitHub/ddiscover}
+
+\newcommand{\slidebg}{%
+  \usebackgroundtemplate{%
+    \begin{tikzpicture}[remember picture,overlay]
+      \fill[AppBg] (current page.south west) rectangle (current page.north east);
+      \fill[AppCard] ([xshift=-16mm,yshift=-8mm]current page.north east) circle (34mm);
+      \fill[AppYellow,opacity=.10] ([xshift=12mm,yshift=5mm]current page.south west) circle (40mm);
+      \draw[AppLine,opacity=.6] ([xshift=8mm,yshift=8mm]current page.south west) -- ([xshift=-8mm,yshift=8mm]current page.south east);
+    \end{tikzpicture}
+  }%
+}
+
+\newcommand{\clearbg}{\usebackgroundtemplate{}}
+
+\newenvironment{slidecanvas}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \begin{scope}[shift={(current page.south west)}]
+}{%
+    \end{scope}
+  \end{tikzpicture}
+}
+
+\newcommand{\kicker}[1]{%
+  \begin{tikzpicture}[baseline=(label.base)]
+    \fill[AppYellow] (0,0.05) circle (1.7pt);
+    \node[anchor=base west,text=AppYellow,font=\scriptsize\bfseries] (label) at (0.18,0) {\MakeUppercase{#1}};
+  \end{tikzpicture}%
+}
+
+\newcommand{\slidetitle}[2]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,text=AppMuted,font=\scriptsize] at ([xshift=9mm,yshift=-7mm]current page.north west) {\kicker{#1}};
+    \node[anchor=north west,text=AppText,font=\fontsize{24}{27}\selectfont\bfseries,text width=105mm] at ([xshift=9mm,yshift=-15mm]current page.north west) {#2};
+  \end{tikzpicture}
+  \vspace*{25mm}
+}
+
+\newcommand{\pagenum}[1]{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=south east,text=AppMuted2,font=\scriptsize] at ([xshift=-8mm,yshift=5mm]current page.south east) {#1 / 10};
+  \end{tikzpicture}
+}
+
+\newcommand{\chip}[3]{%
+  \node[rounded corners=7pt,fill=#1,inner xsep=6pt,inner ysep=4pt,text=#2,font=\scriptsize\bfseries] {#3};
+}
+
+\newcommand{\metric}[4]{%
+  \begin{tikzpicture}
+    \node[rounded corners=8pt,fill=AppCardSoft,draw=AppLine,minimum width=30mm,minimum height=19mm,align=left,inner sep=4mm] {
+      {\color{#1}\fontsize{18}{20}\selectfont\bfseries #2}\\[-1mm]
+      {\color{AppText}\scriptsize\bfseries #3}\\[-1mm]
+      {\color{AppMuted}\tiny #4}
+    };
+  \end{tikzpicture}%
+}
+
+\newcommand{\phoneframe}[4]{%
+  % #1 x, #2 y, #3 width, #4 image path
+  \begin{scope}[shift={(#1,#2)}]
+    \fill[black,rounded corners=16pt] (0,0) rectangle (#3,{#3*2.05});
+    \fill[AppCard,rounded corners=13pt] (.08,.08) rectangle ({#3-.08},{#3*2.05-.08});
+    \clip[rounded corners=12pt] (.18,.22) rectangle ({#3-.18},{#3*2.05-.26});
+    \node[anchor=south west,inner sep=0pt] at (.18,.22) {\includegraphics[width=#3cm]{#4}};
+  \end{scope}
+}
+
+\newcommand{\card}[3]{%
+  % #1 coordinate, #2 text width, #3 content
+  \node[anchor=north west,rounded corners=9pt,fill=AppCard,draw=AppLine,inner sep=4mm,text width=#2] at (#1) {#3};
+}
+
+\newcommand{\smalllabel}[1]{{\color{AppMuted}\scriptsize #1}}
+\newcommand{\bodycopy}[1]{{\color{AppText}\small #1}}
+
+\begin{document}
+\slidebg
+
+% 1
+\begin{frame}[plain]
+  \pagenum{1}
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,text=AppYellow,font=\scriptsize\bfseries] at ([xshift=10mm,yshift=-9mm]current page.north west) {FINAL PROJECT VIDEO};
+    \node[anchor=west,text=AppText,font=\fontsize{42}{45}\selectfont\bfseries] at ([xshift=10mm,yshift=-31mm]current page.north west) {\DeckTitle};
+    \node[anchor=west,text=AppMuted,font=\fontsize{15}{18}\selectfont] at ([xshift=11mm,yshift=-45mm]current page.north west) {\DeckSubtitle};
+
+    \fill[AppYellow] ([xshift=10mm,yshift=18mm]current page.south west) rectangle ++(32mm,1.2mm);
+    \node[anchor=west,text=AppText,font=\small] at ([xshift=10mm,yshift=13mm]current page.south west) {HTW Dresden Mobile Networks APL};
+    \node[anchor=west,text=AppMuted,font=\scriptsize] at ([xshift=10mm,yshift=8mm]current page.south west) {React Native + Expo \quad Convex \quad Clerk \quad MapLibre \quad DVB};
+
+    \begin{scope}[shift={(current page.south west)}]
+      \phoneframe{9.5}{1.0}{3.0}{entdecken-after-marker-clean.png}
+      \phoneframe{7.25}{.52}{2.55}{profile_screen.png}
+      \node[rounded corners=8pt,fill=AppYellow,text=AppInk,font=\scriptsize\bfseries,inner xsep=8pt,inner ysep=5pt] at (10.95,6.35) {map-first};
+    \end{scope}
+  \end{tikzpicture}
+\end{frame}
+
+% 2
+\begin{frame}[plain]
+  \pagenum{2}
+  \slidetitle{Context}{Student club events need one mobile entry point.}
+  \begin{slidecanvas}
+    \card{.75,4.2}{3.45cm}{
+      {\color{AppYellow}\large\bfseries Problem}\\[2mm]
+      \smalllabel{Events are spread across club pages, feeds, social posts, and personal knowledge.}
+    }
+    \card{5.0,4.2}{3.45cm}{
+      {\color{AppCyan}\large\bfseries Product answer}\\[2mm]
+      \smalllabel{A map-first app that connects events, locations, details, and routes.}
+    }
+    \card{9.25,4.2}{2.95cm}{
+      {\color{AppGreen}\large\bfseries MVP focus}\\[2mm]
+      \smalllabel{Discover, calendar, event details, route planning, profile/auth shell.}
+    }
+
+    \draw[AppYellow,line width=1.2pt] (2.7,3.9) -- (5.0,3.9);
+    \draw[AppCyan,line width=1.2pt] (7.0,3.9) -- (9.25,3.9);
+
+    \node[anchor=west,text=AppMuted,font=\small,text width=105mm] at (1.0,1.25) {
+      The goal is not to build a generic event portal. The goal is to answer the student's practical question: \textbf{\color{AppText}what is happening nearby, and how do I get there?}
+    };
+  \end{slidecanvas}
+\end{frame}
+
+% 3
+\begin{frame}[plain]
+  \pagenum{3}
+  \slidetitle{App Overview}{The app is organized around the real user flow.}
+  \begin{slidecanvas}
+    \phoneframe{.9}{.35}{2.45}{entdecken-after-marker-clean.png}
+    \phoneframe{3.75}{.35}{2.45}{entdecken-current.png}
+    \phoneframe{6.6}{.35}{2.45}{profile_screen.png}
+
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (9.7,5.1) {Primary screens};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=31mm] at (9.7,4.65) {Discover map, calendar, event detail, profile.};
+
+    \fill[AppYellow] (9.7,3.93) circle (2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize\bfseries] at (9.9,3.96) {Discover};
+    \node[anchor=west,text=AppMuted,font=\tiny] at (9.9,3.67) {Select a student club on the map};
+    \fill[AppYellow] (9.7,3.13) circle (2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize\bfseries] at (9.9,3.16) {Calendar};
+    \node[anchor=west,text=AppMuted,font=\tiny] at (9.9,2.87) {Browse upcoming VDSC events};
+    \fill[AppYellow] (9.7,2.33) circle (2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize\bfseries] at (9.9,2.36) {Event detail};
+    \node[anchor=west,text=AppMuted,font=\tiny] at (9.9,2.07) {Image, source, time, location, route};
+    \fill[AppYellow] (9.7,1.53) circle (2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize\bfseries] at (9.9,1.56) {Profile};
+    \node[anchor=west,text=AppMuted,font=\tiny] at (9.9,1.27) {Guest-first auth and settings};
+  \end{slidecanvas}
+\end{frame}
+
+% 4
+\begin{frame}[plain]
+  \pagenum{4}
+  \slidetitle{System Shape}{A small backend owns the hard parts.}
+  \begin{slidecanvas}
+    \node[rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=32mm,minimum height=18mm,text=AppText,font=\small\bfseries] (app) at (2.3,3.6) {Expo app};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=32mm,minimum height=18mm,text=AppText,font=\small\bfseries] (convex) at (6.3,3.6) {Convex};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=32mm,minimum height=18mm,text=AppText,font=\small\bfseries] (services) at (10.3,3.6) {External data};
+
+    \draw[AppYellow,line width=1.3pt,-stealth] (app) -- node[above,text=AppMuted,font=\tiny] {queries/actions} (convex);
+    \draw[AppCyan,line width=1.3pt,-stealth] (convex) -- node[above,text=AppMuted,font=\tiny] {imports/lookups} (services);
+
+    \node[anchor=north,text=AppMuted,font=\scriptsize,text width=32mm,align=center] at (2.3,2.55) {React Native UI\\MapLibre map\\Clerk session};
+    \node[anchor=north,text=AppMuted,font=\scriptsize,text width=34mm,align=center] at (6.3,2.55) {tables, functions, cron, storage, public HTTP reads};
+    \node[anchor=north,text=AppMuted,font=\scriptsize,text width=36mm,align=center] at (10.3,2.55) {VDSC feed\\Nominatim\\DVB route data};
+
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (.95,1.02) {Design choice};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=106mm] at (2.8,1.02) {Keep mobile screens thin and let Convex handle scheduled imports, normalization, storage, and external service boundaries.};
+  \end{slidecanvas}
+\end{frame}
+
+% 5
+\begin{frame}[plain]
+  \pagenum{5}
+  \slidetitle{Import Pipeline}{The event data path is idempotent and testable.}
+  \begin{slidecanvas}
+    \node[rounded corners=10pt,fill=AppCard,draw=AppYellow,minimum width=22mm,minimum height=16mm,text=AppText,align=center,font=\scriptsize\bfseries] (feed) at (.8,3.65) {VDSC feed\\[-1mm]{\color{AppMuted}\tiny calendar.json}};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppCyan,minimum width=22mm,minimum height=16mm,text=AppText,align=center,font=\scriptsize\bfseries] (parser) at (3.3,3.65) {Parser\\[-1mm]{\color{AppMuted}\tiny normalize fields}};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppGreen,minimum width=22mm,minimum height=16mm,text=AppText,align=center,font=\scriptsize\bfseries] (upsert) at (5.8,3.65) {Upsert\\[-1mm]{\color{AppMuted}\tiny source key}};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppOrange,minimum width=22mm,minimum height=16mm,text=AppText,align=center,font=\scriptsize\bfseries] (storage) at (8.3,3.65) {Storage\\[-1mm]{\color{AppMuted}\tiny event images}};
+    \node[rounded corners=10pt,fill=AppCard,draw=AppYellow,minimum width=22mm,minimum height=16mm,text=AppText,align=center,font=\scriptsize\bfseries] (cron) at (10.8,3.65) {Cron\\[-1mm]{\color{AppMuted}\tiny every 24h}};
+    \draw[AppLine,line width=1.1pt,-stealth] (feed) -- (parser);
+    \draw[AppLine,line width=1.1pt,-stealth] (parser) -- (upsert);
+    \draw[AppLine,line width=1.1pt,-stealth] (upsert) -- (storage);
+    \draw[AppLine,line width=1.1pt,-stealth] (storage) -- (cron);
+    \node[anchor=north west,text=AppMuted,font=\scriptsize,text width=52mm] at (.9,2.35) {
+      The project avoids browser scraping for the core data path. The structured VDSC feed is easier to verify and safer to run repeatedly.
+    };
+    \node[anchor=north west,text=AppMuted,font=\scriptsize,text width=52mm] at (7.0,2.35) {
+      Event images are scraped from detail pages and stored in Convex Storage, so the mobile app reads stable generated URLs.
+    };
+    \node[anchor=west,text=AppYellow,font=\fontsize{18}{20}\selectfont\bfseries] at (.9,1.05) {56+};
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (1.8,1.05) {live VDSC events imported during final testing};
+  \end{slidecanvas}
+\end{frame}
+
+% 6
+\begin{frame}[plain]
+  \pagenum{6}
+  \slidetitle{Location Reliability}{For maps, one wrong coordinate is visible immediately.}
+  \begin{slidecanvas}
+    \node[anchor=north west,text=AppText,font=\small\bfseries] at (.9,4.55) {Coordinate priority};
+    \draw[AppLine,line width=.8pt] (.9,4.25) -- (11.9,4.25);
+
+    \fill[AppYellow] (1.5,3.35) circle (9pt);
+    \node[text=AppInk,font=\scriptsize\bfseries] at (1.5,3.35) {1};
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (1.85,3.5) {Reviewed Convex row};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=29mm] at (1.85,3.05) {Manual or checked coordinates win first};
+
+    \fill[AppCyan] (5.25,3.35) circle (9pt);
+    \node[text=AppInk,font=\scriptsize\bfseries] at (5.25,3.35) {2};
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (5.6,3.5) {Curated MVP fallback};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=29mm] at (5.6,3.05) {Known clubs stay usable offline};
+
+    \fill[AppGreen] (9.0,3.35) circle (9pt);
+    \node[text=AppInk,font=\scriptsize\bfseries] at (9.0,3.35) {3};
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (9.35,3.5) {Geocoding cache};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=29mm] at (9.35,3.05) {Nominatim only fills gaps};
+
+    \node[rounded corners=12pt,fill=AppCard,draw=AppLine,inner sep=5mm,text width=105mm] at (6.4,1.35) {
+      {\color{AppYellow}\bfseries Lesson:} automated geocoding is useful enrichment, but reviewed coordinates are the better source of truth for a student-facing map MVP.
+    };
+  \end{slidecanvas}
+\end{frame}
+
+% 7
+\begin{frame}[plain]
+  \pagenum{7}
+  \slidetitle{Native Runtime}{The hardest bug only appeared in APK builds.}
+  \begin{slidecanvas}
+    \node[rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=42mm,minimum height=22mm,text=AppText,align=center] at (2.9,3.9) {
+      {\color{AppYellow}\bfseries Local dev}\\[-1mm]
+      \smalllabel{Metro + dev client worked}
+    };
+    \node[rounded corners=10pt,fill=AppCard,draw=AppRed,minimum width=42mm,minimum height=22mm,text=AppText,align=center] at (7.0,3.9) {
+      {\color{AppRed}\bfseries Standalone APK}\\[-1mm]
+      \smalllabel{Convex data failed}
+    };
+    \node[rounded corners=10pt,fill=AppCard,draw=AppGreen,minimum width=42mm,minimum height=22mm,text=AppText,align=center] at (11.1,3.9) {
+      {\color{AppGreen}\bfseries Fix}\\[-1mm]
+      \smalllabel{HTTP queries + URL normalization}
+    };
+    \draw[AppLine,line width=1pt,-stealth] (4.95,3.9) -- (5.85,3.9);
+    \draw[AppLine,line width=1pt,-stealth] (9.05,3.9) -- (9.95,3.9);
+
+    \node[anchor=north west,text=AppMuted,font=\scriptsize,text width=52mm] at (1.0,2.35) {
+      Root causes: unstable Convex function references as effect dependencies, WebSocket path behavior in the APK context, and a trailing slash in the CI Convex URL.
+    };
+    \node[anchor=north west,text=AppMuted,font=\scriptsize,text width=52mm] at (7.0,2.35) {
+      Result: public app data loads through stable Convex HTTP queries; runtime config strips trailing slashes before building API paths.
+    };
+  \end{slidecanvas}
+\end{frame}
+
+% 8
+\begin{frame}[plain]
+  \pagenum{8}
+  \slidetitle{Testing And CI}{Device testing became part of the product work.}
+  \begin{slidecanvas}
+    \node at (2.25,3.15) {\metric{AppYellow}{17}{backend tests}{parser, import, geocoding, images}};
+    \node at (5.15,3.15) {\metric{AppCyan}{3}{core checks}{TypeScript, lint, Vitest}};
+    \node at (8.05,3.15) {\metric{AppGreen}{2}{APK paths}{GitHub Actions + GitLab CI}};
+    \node at (10.95,3.15) {\metric{AppOrange}{1}{phone loop}{artifact, install, logs}};
+
+    \node[anchor=north west,text=AppMuted,font=\scriptsize,text width=111mm] at (.95,1.75) {
+      Expo Go was not enough because the app uses native modules and a dev-client workflow. APK builds make the final behavior testable on a real Android phone and catch missing public configuration before hand-in.
+    };
+  \end{slidecanvas}
+\end{frame}
+
+% 9
+\begin{frame}[plain]
+  \pagenum{9}
+  \slidetitle{Difficulties}{Most risk came from system boundaries, not screen code.}
+  \begin{slidecanvas}
+    \node[anchor=north west,rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=54mm,minimum height=20mm,inner sep=4mm,text width=45mm] at (1.0,4.25) {
+      {\color{AppYellow}\small\bfseries Android tooling}\\[1mm]
+      {\color{AppMuted}\scriptsize ADB, emulator disk, stale Metro state}
+    };
+    \node[anchor=north west,rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=54mm,minimum height=20mm,inner sep=4mm,text width=45mm] at (6.9,4.25) {
+      {\color{AppCyan}\small\bfseries Auth handoff}\\[1mm]
+      {\color{AppMuted}\scriptsize Clerk session vs Convex auth in APK}
+    };
+    \node[anchor=north west,rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=54mm,minimum height=20mm,inner sep=4mm,text width=45mm] at (1.0,2.65) {
+      {\color{AppGreen}\small\bfseries Data quality}\\[1mm]
+      {\color{AppMuted}\scriptsize VDSC feed gaps, images, coordinates}
+    };
+    \node[anchor=north west,rounded corners=10pt,fill=AppCard,draw=AppLine,minimum width=54mm,minimum height=20mm,inner sep=4mm,text width=45mm] at (6.9,2.65) {
+      {\color{AppOrange}\small\bfseries Map interaction}\\[1mm]
+      {\color{AppMuted}\scriptsize Native markers, drawer gestures, theme colors}
+    };
+    \node[anchor=west,text=AppText,font=\small\bfseries] at (1.0,1.05) {Practical takeaway};
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=88mm] at (3.05,1.05) {Mobile projects need early real-device checks, explicit runtime config validation, and written root-cause notes.};
+  \end{slidecanvas}
+\end{frame}
+
+% 10
+\begin{frame}[plain]
+  \pagenum{10}
+  \slidetitle{Final State}{The project has a complete end-to-end discovery loop.}
+  \begin{slidecanvas}
+    \node[anchor=north west,text=AppText,font=\small\bfseries] at (.95,4.75) {Ready to show};
+    \fill[AppYellow] (1.05,4.18) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,4.18) {Map-first student club discovery};
+    \fill[AppCyan] (1.05,3.65) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,3.65) {Calendar and event detail pages};
+    \fill[AppGreen] (1.05,3.12) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,3.12) {Event images stored through Convex};
+    \fill[AppOrange] (1.05,2.59) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,2.59) {DVB route planning on event details};
+    \fill[AppYellow] (1.05,2.06) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,2.06) {Guest-first profile and auth shell};
+    \fill[AppCyan] (1.05,1.53) circle (2.2pt);
+    \node[anchor=west,text=AppText,font=\scriptsize] at (1.25,1.53) {Manual APK builds for phone testing};
+
+    \node[anchor=north west,rounded corners=12pt,fill=AppYellow,inner sep=5mm,text width=47mm] at (7.25,4.45) {
+      {\color{AppInk}\large\bfseries What remains}\\[1mm]
+      {\color{AppInk}\scriptsize Fully re-enable cloud-synced favorites, add richer filters, verify GitLab hand-in settings, and run final APK smoke test.}
+    };
+
+    \node[anchor=west,text=AppMuted,font=\scriptsize,text width=112mm] at (.95,.72) {
+      Closing line: DDiscover is no longer just a prototype. It connects real imported events, a mobile discovery UI, backend automation, route planning, and a reproducible submission process.
+    };
+  \end{slidecanvas}
+\end{frame}
+
+\end{document}

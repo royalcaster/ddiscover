@@ -3,7 +3,7 @@ import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { Image } from 'expo-image';
 import { ArrowLeft, Building2, CalendarClock, Heart, MoonStar, Settings, ShieldCheck } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { api } from '../../../convex/_generated/api';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
@@ -18,6 +18,22 @@ import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { clerkEnabled } from '@/lib/auth';
 import { openEventDetail } from '@/lib/navigation';
+import { useAppTheme } from '@/providers/theme-provider';
+
+const HEADER_ACTION_COLORS = {
+  light: {
+    background: '#f2f2f2',
+    border: 'rgba(17,17,17,0.08)',
+    foreground: '#111111',
+    ripple: 'rgba(0,0,0,0.08)',
+  },
+  dark: {
+    background: '#1f1f1d',
+    border: 'rgba(255,255,255,0.08)',
+    foreground: '#f5f0df',
+    ripple: 'rgba(255,255,255,0.12)',
+  },
+} as const;
 
 function formatEventDate(timestamp: number) {
   return new Intl.DateTimeFormat('de-DE', {
@@ -75,6 +91,28 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
   },
+  headerActionClip: {
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 40,
+    overflow: 'hidden',
+    width: 40,
+  },
+  headerActionButton: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  authSurface: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  authContent: {
+    width: '100%',
+    maxWidth: 460,
+  },
 });
 
 function FavoritesSection() {
@@ -121,13 +159,13 @@ function FavoritesSection() {
           </Text>
         ) : favoriteCount === 0 ? (
           <Text className="text-muted-foreground text-sm">
-            Gespeicherte Clubs und Events erscheinen hier.
+            Gespeicherte Studentenclubs und Events erscheinen hier.
           </Text>
         ) : (
           <View className="gap-3">
             {favoriteClubs.length > 0 ? (
               <View className="gap-2">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase">Clubs</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase">Studentenclubs</Text>
                 {favoriteClubs.slice(0, 5).map((club) => (
                   <View key={club._id} className="flex-row items-center gap-3 rounded-[12px] bg-secondary px-3 py-3">
                     <Building2 size={16} color={theme.foreground} />
@@ -167,24 +205,28 @@ function FavoritesSection() {
 
 function SignedOutAuthSurface() {
   const isFocused = useIsFocused();
+  const { height } = useWindowDimensions();
+  const authSurfaceMinHeight = Math.max(420, height - 220);
 
   if (!isFocused) {
     return (
-      <View className="min-h-[560px] items-center justify-center">
+      <View style={[styles.authSurface, { minHeight: authSurfaceMinHeight }]}>
         <Text className="text-muted-foreground text-sm">Profil wird geladen...</Text>
       </View>
     );
   }
 
   return (
-    <View className="min-h-[320px] justify-center gap-4">
-      <View className="gap-2">
-        <Text className="text-center text-2xl font-semibold">Bei DDiscover anmelden</Text>
-        <Text className="text-muted-foreground text-center text-sm">
-          Speichere Clubs und Events mit deinem Google Konto.
-        </Text>
+    <View style={[styles.authSurface, { minHeight: authSurfaceMinHeight }]}>
+      <View className="gap-4" style={styles.authContent}>
+        <View className="gap-2">
+          <Text className="text-center text-2xl font-semibold">Bei DDiscover anmelden</Text>
+          <Text className="text-muted-foreground text-center text-sm">
+            Speichere Studentenclubs und Events mit deinem Google Konto.
+          </Text>
+        </View>
+        <GoogleSignInButton />
       </View>
-      <GoogleSignInButton />
     </View>
   );
 }
@@ -208,7 +250,8 @@ function SettingsContent() {
 }
 
 export default function ProfileScreen() {
-  const theme = useTheme();
+  const { resolvedTheme } = useAppTheme();
+  const headerActionColors = HEADER_ACTION_COLORS[resolvedTheme];
   const { isSignedIn } = useAuth();
   const [showSettings, setShowSettings] = React.useState(false);
 
@@ -216,17 +259,26 @@ export default function ProfileScreen() {
     <ScreenShell
       title={showSettings ? 'Einstellungen' : 'Profil'}
       headerRight={
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-10 w-10 rounded-full"
-          onPress={() => setShowSettings((value) => !value)}>
+        <Pressable
+          key={resolvedTheme}
+          accessibilityLabel={showSettings ? 'Zurück zum Profil' : 'Einstellungen öffnen'}
+          accessibilityRole="button"
+          android_ripple={{ color: headerActionColors.ripple, borderless: true }}
+          onPress={() => setShowSettings((value) => !value)}
+          style={[
+            styles.headerActionClip,
+            styles.headerActionButton,
+            {
+              backgroundColor: headerActionColors.background,
+              borderColor: headerActionColors.border,
+            },
+          ]}>
           {showSettings ? (
-            <ArrowLeft size={18} color={theme.foreground} />
+            <ArrowLeft size={18} color={headerActionColors.foreground} />
           ) : (
-            <Settings size={18} color={theme.foreground} />
+            <Settings size={18} color={headerActionColors.foreground} />
           )}
-        </Button>
+        </Pressable>
       }>
       {showSettings ? (
         <SettingsContent />
