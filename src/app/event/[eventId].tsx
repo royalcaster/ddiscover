@@ -48,6 +48,18 @@ function formatAddress(addressLine?: string, postalCode?: string, city?: string)
   return [addressLine, [postalCode, city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
 }
 
+function EventHeroFallback() {
+  const theme = useTheme();
+
+  return (
+    <View className="absolute inset-0 items-center justify-center bg-zinc-200 dark:bg-zinc-900">
+      <View className="h-20 w-20 items-center justify-center rounded-full bg-white/75 dark:bg-white/10">
+        <Music2 size={38} color={theme.foreground} />
+      </View>
+    </View>
+  );
+}
+
 function inferGenre(title: string) {
   const normalized = title.toLowerCase();
   if (normalized.includes('techno')) return 'Techno';
@@ -242,7 +254,13 @@ export default function EventDetailScreen() {
   const event = detail?.event;
   const club = detail?.club;
   const favorited = event ? favorites.isEventFavorited(event._id) : false;
-  const heroImageSource = event?.imageUrl ? { uri: event.imageUrl } : EVENT_HERO;
+  const [heroImageFailed, setHeroImageFailed] = React.useState(false);
+  const showRemoteHero = Boolean(event?.imageUrl && !heroImageFailed);
+  const heroImageSource = showRemoteHero ? { uri: event?.imageUrl } : EVENT_HERO;
+
+  React.useEffect(() => {
+    setHeroImageFailed(false);
+  }, [event?._id, event?.imageUrl]);
 
   const address = event
     ? formatAddress(event.addressLine ?? club?.addressLine, event.postalCode ?? club?.postalCode, event.city ?? club?.city)
@@ -261,7 +279,15 @@ export default function EventDetailScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1" contentContainerClassName="pb-28">
         <View className="relative h-[300px] overflow-hidden bg-secondary">
-          <Image source={heroImageSource} className="h-full w-full opacity-90" contentFit="cover" />
+          <EventHeroFallback />
+          <Image
+            source={heroImageSource}
+            className="h-full w-full opacity-90"
+            contentFit="cover"
+            recyclingKey={event?._id ?? 'event-loading'}
+            transition={180}
+            onError={() => setHeroImageFailed(true)}
+          />
           <View className="absolute inset-0 bg-black/35" />
           <View className="absolute left-4 right-4 top-3 flex-row items-center justify-between">
             <Pressable
