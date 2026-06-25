@@ -7,6 +7,9 @@ const IMAGE_META_KEYS = new Set([
   'image',
 ]);
 
+const IMAGE_SOURCE_ATTRIBUTES = ['src', 'data-src', 'data-lazy-src', 'data-original'];
+const IMAGE_SRCSET_ATTRIBUTES = ['srcset', 'data-srcset'];
+
 function decodeHtmlAttribute(value: string) {
   return value
     .replace(/&amp;/g, '&')
@@ -23,6 +26,17 @@ function getHtmlAttribute(tag: string, name: string) {
   return match ? decodeHtmlAttribute(match[2].trim()) : null;
 }
 
+function isLikelyTrackingImage(imageUrl: string) {
+  const normalized = imageUrl.toLowerCase();
+  return (
+    normalized.startsWith('data:') ||
+    normalized.includes('/pixel') ||
+    normalized.includes('tracking') ||
+    normalized.includes('spacer') ||
+    normalized.includes('blank.')
+  );
+}
+
 function normalizeImageUrl(candidate: string, pageUrl: string) {
   const firstSrcsetEntry = candidate.split(',')[0]?.trim() ?? candidate;
   const rawUrl = firstSrcsetEntry.split(/\s+/)[0]?.trim();
@@ -33,10 +47,42 @@ function normalizeImageUrl(candidate: string, pageUrl: string) {
 
   try {
     const url = new URL(rawUrl, pageUrl);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+    const normalizedUrl = url.toString();
+    if ((url.protocol !== 'http:' && url.protocol !== 'https:') || isLikelyTrackingImage(normalizedUrl)) {
+      return null;
+    }
+    return normalizedUrl;
   } catch {
     return null;
   }
+}
+
+function extractImageUrlFromImgTag(tag: string, pageUrl: string) {
+  for (const attributeName of IMAGE_SOURCE_ATTRIBUTES) {
+    const value = getHtmlAttribute(tag, attributeName);
+    if (!value) {
+      continue;
+    }
+
+    const imageUrl = normalizeImageUrl(value, pageUrl);
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  for (const attributeName of IMAGE_SRCSET_ATTRIBUTES) {
+    const value = getHtmlAttribute(tag, attributeName);
+    if (!value) {
+      continue;
+    }
+
+    const imageUrl = normalizeImageUrl(value, pageUrl);
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  return null;
 }
 
 export function extractEventImageUrlFromHtml(html: string, pageUrl: string) {
@@ -70,6 +116,14 @@ export function extractEventImageUrlFromHtml(html: string, pageUrl: string) {
     }
 
     const imageUrl = normalizeImageUrl(href, pageUrl);
+    if (imageUrl) {
+      return imageUrl;
+    }
+  }
+
+  const imageTags = head.match(/<img\b[^>]*>/gi) ?? [];
+  for (const tag of imageTags) {
+    const imageUrl = extractImageUrlFromImgTag(tag, pageUrl);
     if (imageUrl) {
       return imageUrl;
     }
