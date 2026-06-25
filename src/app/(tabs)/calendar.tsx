@@ -1,7 +1,6 @@
-import { Image } from 'expo-image';
 import { Heart, Music2 } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image as NativeImage, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../../convex/_generated/api';
@@ -12,6 +11,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { openEventDetail } from '@/lib/navigation';
 
 const EVENT_THUMBNAIL = require('../../../assets/images/logo-glow.png');
+
+const styles = StyleSheet.create({
+  eventThumbnail: {
+    height: '100%',
+    width: '100%',
+  },
+});
 
 function toDayKey(timestamp: number) {
   return new Date(timestamp).toISOString().slice(0, 10);
@@ -148,7 +154,7 @@ export default function CalendarScreen() {
                   className={isLast ? 'flex-row gap-3 px-3 py-3' : 'flex-row gap-3 border-b border-border px-3 py-3'}
                   onPress={() => openEventDetail(event._id)}>
                   <View className="h-[76px] w-[76px] overflow-hidden rounded-[10px] bg-secondary">
-                    <Image source={imageSource} className="h-full w-full" contentFit="cover" />
+                    <NativeImage source={imageSource} resizeMode="cover" style={styles.eventThumbnail} />
                     {event.imageUrl ? (
                       <View className="absolute inset-0 bg-black/10 dark:bg-black/20" />
                     ) : (

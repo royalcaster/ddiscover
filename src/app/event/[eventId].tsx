@@ -1,10 +1,9 @@
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useAction } from 'convex/react';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, CalendarClock, ExternalLink, Globe2, Heart, MapPin, Music2, Navigation, Route, Share2 } from 'lucide-react-native';
 import React from 'react';
-import { Linking, Pressable, ScrollView, Share, TextInput, View } from 'react-native';
+import { Image as NativeImage, Linking, Pressable, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../../convex/_generated/api';
@@ -15,6 +14,14 @@ import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 
 const EVENT_HERO = require('../../../assets/images/logo-glow.png');
+
+const styles = StyleSheet.create({
+  heroImage: {
+    height: '100%',
+    opacity: 0.9,
+    width: '100%',
+  },
+});
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -255,8 +262,9 @@ export default function EventDetailScreen() {
   const club = detail?.club;
   const favorited = event ? favorites.isEventFavorited(event._id) : false;
   const [heroImageFailed, setHeroImageFailed] = React.useState(false);
-  const showRemoteHero = Boolean(event?.imageUrl && !heroImageFailed);
-  const heroImageSource = showRemoteHero ? { uri: event?.imageUrl } : EVENT_HERO;
+  const remoteHeroUrl = event?.imageUrl ?? null;
+  const showRemoteHero = Boolean(remoteHeroUrl && !heroImageFailed);
+  const heroImageSource = showRemoteHero && remoteHeroUrl ? { uri: remoteHeroUrl } : EVENT_HERO;
 
   React.useEffect(() => {
     setHeroImageFailed(false);
@@ -279,14 +287,17 @@ export default function EventDetailScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView className="flex-1" contentContainerClassName="pb-28">
         <View className="relative h-[300px] overflow-hidden bg-secondary">
-          <EventHeroFallback />
-          <Image
+          {showRemoteHero ? (
+            <View className="absolute inset-0 bg-zinc-200 dark:bg-zinc-900" />
+          ) : (
+            <EventHeroFallback />
+          )}
+          <NativeImage
+            key={event?._id ?? 'event-loading'}
             source={heroImageSource}
-            className="h-full w-full opacity-90"
-            contentFit="cover"
-            recyclingKey={event?._id ?? 'event-loading'}
-            transition={180}
+            resizeMode="cover"
             onError={() => setHeroImageFailed(true)}
+            style={styles.heroImage}
           />
           <View className="absolute inset-0 bg-black/35" />
           <View className="absolute left-4 right-4 top-3 flex-row items-center justify-between">
