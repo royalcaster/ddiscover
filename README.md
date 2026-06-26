@@ -50,10 +50,11 @@ DDiscover is an HTW Dresden Mobile Networks APL project for discovering Dresden 
 
 ### Submission Documents
 
-- Learning Journal and AI appendix: `docs/development-diary.md`
-- Glossary / Glossar: `docs/glossary.md`
-- Final video plan: `docs/presentations/ddiscover-final-video-plan.md`
-- Final hand-in checklist: `docs/final-submission-checklist.md`
+- Learning Journal and AI appendix: `docs/submission/development-diary.md`
+- Glossary / Glossar: `docs/submission/glossary.md`
+- Final video plan: `docs/submission/ddiscover-final-video-plan.md`
+- Final slides: `docs/submission/presentation/ddiscover-final-slides.pdf`
+- Final hand-in checklist: `docs/submission/final-submission-checklist.md`
 
 ### Android Commands
 

@@ -4,10 +4,11 @@ Deadline: June 28, 2026 at 23:59.
 
 ## Prepared In Repository
 
-- Learning Journal draft: `docs/development-diary.md`
-- AI prompt appendix: included as Appendix A in `docs/development-diary.md`
-- Glossary / Glossar: `docs/glossary.md`
-- Final video plan/script: `docs/presentations/ddiscover-final-video-plan.md`
+- Learning Journal draft: `docs/submission/development-diary.md`
+- AI prompt appendix: included as Appendix A in `docs/submission/development-diary.md`
+- Glossary / Glossar: `docs/submission/glossary.md`
+- Final video plan/script: `docs/submission/ddiscover-final-video-plan.md`
+- Final slides: `docs/submission/presentation/ddiscover-final-slides.pdf`
 - Android phone testing notes: `docs/android-device-testing.md`
 - GitHub Actions APK workflow: `.github/workflows/android-apk.yml`
 - GitLab CI APK job: `.gitlab-ci.yml`

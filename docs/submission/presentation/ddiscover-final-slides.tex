@@ -1,7 +1,7 @@
 \documentclass[aspectratio=169,11pt]{beamer}
 
-% Compile from the repository root or from docs/presentations:
-%   pdflatex -interaction=nonstopmode -output-directory docs/presentations docs/presentations/ddiscover-final-slides.tex
+% Compile with:
+%   powershell -ExecutionPolicy Bypass -File docs/submission/presentation/build-final-slides.ps1
 % Run twice if page numbers or references need a second pass.
 
 \usepackage[T1]{fontenc}
@@ -13,7 +13,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usetikzlibrary{calc,positioning,shapes.geometric}
-\graphicspath{{docs/design/}{../design/}{docs/presentations/assets/}{assets/}{assets/images/}{../../assets/images/}}
+\graphicspath{{docs/design/}{../../design/}{docs/submission/presentation/assets/}{assets/}{assets/images/}{../../../assets/images/}}
 
 \renewcommand{\familydefault}{\sfdefault}
 \hyphenpenalty=10000

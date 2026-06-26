@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = Resolve-Path (Join-Path $scriptDir "..\..")
+$repoRoot = Resolve-Path (Join-Path $scriptDir "..\..\..")
 $texFile = Join-Path $scriptDir "ddiscover-final-slides.tex"
 
 function Invoke-Latex($command) {
