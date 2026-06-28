@@ -1,6 +1,6 @@
 # Development Diary / Learning Journal
 
-Note: All documented development sessions were completed together by Philip Popplutz and Gabriel Pechstein, either on site at HTW facilities or remotely via Discord.
+Note: All documented development sessions were completed together by Philip Poplutz and Gabriel Pechstein, either on site at HTW facilities or remotely via Discord.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-23
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 16:00-23:40 CEST
 - Duration: ~7h 40m
 - Activities:
@@ -39,7 +39,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-24
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 00:00-02:10 CEST, with later follow-up work during the day
 - Duration: ~4h
 - Activities:
@@ -62,7 +62,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-25
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: afternoon/evening CEST
 - Duration: ~4h
 - Activities:
@@ -87,7 +87,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-26
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: CEST
 - Duration: ~30m
 - Activities:
@@ -103,7 +103,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-17
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 17:26 CEST
 - Duration: ~25m
 - Activities:
@@ -119,7 +119,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-18
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: daytime CEST
 - Duration: ~1h 30m
 - Activities:
@@ -139,7 +139,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-20
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: CEST
 - Duration: ~30m
 - Activities:
@@ -155,7 +155,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-31
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: daytime/evening CEST
 - Duration: ~3h
 - Activities:
@@ -181,7 +181,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-15
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 12:00-15:35 CEST
 - Duration: ~1h 10m active work
 - Activities:
@@ -207,7 +207,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-16
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 13:15-16:11 CEST
 - Duration: ~1h active work
 - Activities:
@@ -228,7 +228,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-23
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 12:06-13:00 CEST
 - Duration: ~1h
 - Activities:
@@ -250,7 +250,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-24
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 13:20-23:25 CEST
 - Duration: ~3h 20m active work
 - Activities:
@@ -278,7 +278,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-25
 
-- Participants: Philip Popplutz, Gabriel Pechstein
+- Participants: Philip Poplutz, Gabriel Pechstein
 - Time: 01:35-19:45 CEST
 - Duration: ~3h active work
 - Activities:
@@ -305,23 +305,31 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ## Appendix A - AI Prompt and Outcome Summary
 
-The project used AI assistance as a development support tool. The AI was asked to inspect the repository, propose implementation steps, modify code or documentation, run local validation where possible, and record the outcomes in daily session summaries. The prompts below are paraphrased from the development sessions and grouped by work area.
+The project used AI assistance as a development support tool. The AI was asked to inspect the repository, propose implementation steps, modify code or documentation, run local validation where possible, and record the outcomes in daily session summaries. The entries below are paraphrased from the local Codex chat history and grouped by work area. They are intentionally not raw transcript exports, because raw chats contain terminal dumps, local paths, interrupted commands, and troubleshooting noise that are not useful for assessment.
 
-| Area | Prompt / task given to AI | Outcome |
+| Area | Representative prompt / task given to AI | Outcome |
 | --- | --- | --- |
-| Repository rules | Create repo-local rules from the assignment and make them visible to future agents. | Added `AGENTS.md`, README notes, session summary rules, Conventional Commit rules, and assignment constraints. |
-| Initial stack setup | Initialize React Native/Expo, Convex, and Clerk in focused steps. | Created the app baseline, providers, config files, generated Convex bindings, and verified with TypeScript/lint checks. |
-| Android development | Diagnose Expo Go, ADB, emulator, Metro, and Android build failures. | Moved development to emulator/dev-client workflow, added helper scripts, fixed SDK/env issues, and documented commands. |
-| VDSC ingestion | Port the old event scraper to Convex and prefer static/fetch sources over browser scraping. | Found the VDSC JSON feed, implemented parser/import/upsert logic, added tests, and verified dry-run/live imports. |
-| Backend data quality | Normalize clubs, protect reviewed club records, and add geocoding. | Added canonical club handling, reviewed coordinate strategy, geocoding cache, Nominatim helper, and regression tests. |
-| Product scope | Define the smallest useful beta and avoid scope creep. | Produced the MVP beta brief with map discovery, calendar, profile, and authenticated favorites as the core. |
-| UI implementation | Redesign the app toward the provided mobile nightlife mockup. | Built a five-tab app shell, map-first Discover screen, themed calendar/profile surfaces, and later MapLibre-based map UI. |
-| Authentication | Integrate Google sign-in through Clerk while keeping guest access. | Added profile-based auth, SSO callback handling, config validation, and safer signed-out/favorite prompts. |
-| Favorites | Implement favorite behavior and debug Clerk/Convex auth mismatch. | Added initial favorites backend/UI, then temporarily disabled realtime favorites in APK context when Convex WebSocket auth was unreliable. |
-| Route planning | Use `dvbjs` to add public transport planning to event details. | Added Convex route-planning action and event-detail route UI with walking/transit legs. |
-| CI/APK builds | Create phone-testable APK builds through GitHub Actions and GitLab CI. | Added manual APK workflows/jobs, prebuild steps, artifact documentation, and public config validation. |
-| APK runtime debugging | Investigate why Convex data loaded locally but not in APKs. | Found unstable effect dependencies, WebSocket 404 behavior, and trailing slash URL bug; fixed public HTTP query loading and URL normalization. |
-| Event images | Scrape and store one event image per imported VDSC event. | Added metadata extraction, Convex Storage persistence, query-time image URLs, UI rendering, and tests. |
-| Submission preparation | Review missing final submission items and prepare what can be done locally. | Consolidated this Learning Journal, created glossary and final video plan, updated README, ignored local artifacts, and documented manual GitLab checks. |
+| Repository rules and assignment constraints | Read the assignment and repository notes, then create persistent repo-local rules for all future agents. Include daily session summaries, Markdown placement rules, Conventional Commits, README update expectations, GitLab/private-submission constraints, and Learning Journal evidence requirements. | Added `AGENTS.md`, README notes, session-summary workflow, Conventional Commit rules, and assignment-derived constraints that guided later implementation and documentation work. |
+| Initial Expo, Convex, and Clerk setup | Initialize a React Native app with Expo, add Convex as the backend, add Clerk as the authentication provider, and keep these setup steps focused enough to commit separately. Also explain where generated Convex files belong and how TypeScript types relate to Convex schema validators. | Created the app baseline, providers, config files, generated Convex bindings, starter schema, and auth wiring. Verified the baseline with TypeScript and lint checks where possible. |
+| Android development environment | Diagnose why Expo Go, LAN mode, USB debugging, ADB, Metro, and `expo run:android` were failing. Help set up an Android Studio emulator, make command-line startup easier, and add package scripts for starting/stopping Metro, starting the emulator, applying ADB reverse, and running the Android dev build. | Moved development to an emulator/dev-client workflow, added Android helper scripts, fixed SDK/env assumptions, documented startup commands, and reduced repeated manual setup work. |
+| Development-build troubleshooting | Explain how Expo development builds differ from Expo Go, whether they are installed on the phone/emulator, how hot reload still works, and what to do when Metro connects to the wrong IP address or port 8081 becomes busy. | Clarified the development-build workflow, added Metro cleanup helpers, added ADB reverse support, and documented the practical local workflow in README/session notes. |
+| VDSC event ingestion | Move the old Firebase/Puppeteer student-club event scraper toward Convex, but first try a simpler fetch/static-source approach. Investigate whether VDSC exposes structured data, implement parser/import/upsert logic, and add backend tests for the Convex functions and parser behavior. | Found the VDSC JSON calendar feed, implemented parser/import/upsert logic, added Convex tests, and verified dry-run and live imports without browser scraping. |
+| Backend schema and data quality | Normalize clubs from imported event data, avoid duplicate club rows, preserve manually reviewed Convex dashboard data, and add geocoding only where it is reliable. Use tests for behavior that can be verified automatically. | Added canonical club handling, reviewed-data protection, curated coordinate strategy, geocoding cache, Nominatim helper, and regression tests so imports do not overwrite reviewed MVP data. |
+| Product scope and MVP planning | Scan the codebase and docs, then help define the smallest useful beta for a student-club discovery app. Keep the MVP narrow enough for release while still covering map discovery, calendar browsing, profile/auth, and favorites. Produce a detailed brief another agent could follow. | Produced the MVP beta brief, narrowed the product scope, and used it to guide later map, calendar, profile, favorites, and route-planning work. |
+| UI foundation and design alignment | Redesign the app toward the provided mobile nightlife mockups, use React Native Reusables and NativeWind-style theming properly, preserve light/dark/system theme behavior, and avoid a temporary component setup that would be hard to maintain. | Built the themed five-tab shell, semantic theme tokens, reusable UI foundation, design-aligned calendar/profile surfaces, and later refinements based on emulator screenshots. |
+| Discover map experience | Make the Discover screen map-based, fix the map not loading on Android, improve marker styling, add selected/unselected marker states, show the user location, add a location-center button and "Heute offen" filter, and later replace Google Maps with a more stylable MapLibre approach. | Implemented the map-first Discover screen, MapLibre map UI, custom beer marker asset, user-location control, open-today filter, selected marker colors, and drawer-based club/event presentation. |
+| Bottom sheet and Android interaction polish | Turn the map information panel into a bottom-up drawer, separate club and event information clearly, prevent drag flicker, keep map controls moving with the drawer, avoid drawer scrolling by showing an overflow action, and use Android-native ripple behavior where appropriate. | Added and refined the discover bottom sheet, fixed drag-state handling, moved map controls with the sheet, capped drawer content, added "Alle Events ansehen", and updated Android touch feedback. |
+| Clerk authentication | Add Clerk login in the profile tab without forcing authentication at app start. Use Google sign-in, explain which Google/Clerk client IDs are needed, debug missing session/profile updates, fix redirect/session handling, and keep guest browsing available. | Added profile-based auth UX, Google sign-in button, SSO callback handling, config validation, profile display, and safer signed-out prompts while preserving guest access. |
+| Favorites and Convex auth | Implement favorites for clubs/events, show them in the profile area, and debug why Clerk sign-in did not always make Convex mutations authenticated. Keep developer-only errors out of user-facing modals. Later restore favorites with the Clerk `convex` JWT template after the APK issue was understood. | Added favorites backend/UI, improved error handling, diagnosed Clerk/Convex token mismatch, temporarily guarded unreliable APK behavior, and later restored authenticated favorite mutations through Convex HTTP clients. |
+| Calendar screen | Redesign the calendar to match the app design, show a seven-day strip starting with today, keep real dates, support light/dark mode, navigate to event detail pages, and later disable experimental swipe gestures until they can be refined. | Built the calendar screen, event list/detail navigation, favorite toggles, static day selection, and native ripple row feedback. |
+| Event detail and route planning | Build a dedicated event-detail screen that every event list can link to, prevent crashes when no event is selected, and integrate DVB public transport planning with `dvbjs` so users can see transit and walking legs to an event. | Added event detail routing, guarded null event states, added the Convex route-planning action, and rendered transit/walking route information in the event detail screen. |
+| APK and CI builds | Make it possible to test the current app on a real smartphone without Expo Go, preferably by downloading an APK. Add GitHub Actions and GitLab CI build paths, explain how to trigger them, and add fail-fast checks for public Convex/Clerk/Google configuration. | Added manual APK workflows/jobs, Expo prebuild steps, artifact documentation, Android testing notes, and public config validation for CI builds. |
+| APK runtime debugging | Investigate why Google sign-in worked in an installed APK but Convex data did not load. Provide concrete debugging steps, inspect GitHub Actions configuration, handle ADB/Wi-Fi debugging, and document the root cause once found. | Found and fixed unstable Convex query references, APK WebSocket limitations, and a trailing-slash Convex URL issue that created double-slash API paths. Documented the fix and stabilized public data loading. |
+| Event image pipeline | Extend the scraper so each imported event can have one usable image, decide whether Convex Storage is enough or whether a CDN is needed, store image metadata and files, add tests, run the import, and verify that images appear in the app/APK. | Added event-image scraping, metadata and fallback image extraction, Convex Storage persistence, query-time image URLs, React Native image rendering, tests, and cron-enabled imports. |
+| Emulator and performance diagnostics | Investigate why the Android emulator was running slowly, inspect emulator/ADB/system state, tune the AVD and helper scripts, and explain what Android Studio settings or emulator hardware acceleration changes were relevant. | Tuned emulator launch defaults, identified stale processes and snapshot/disk issues, improved local scripts, and documented a faster Android development loop. |
+| Midterm presentation | Create a 7-minute midterm presentation covering UX/features first and technical architecture second. Explore export options such as Google Slides or LaTeX, review the visual design, improve colors/layout, and provide speaker bullet content. | Created midterm presentation materials under `docs/presentations/`, reviewed screenshots, improved slide design, and added bullet-only speaker content. |
+| Final submission preparation | Check assignment requirements and repository state, identify missing non-app submission items, consolidate the Learning Journal, create a glossary, prepare a final video plan, update README, and document manual GitLab checks. | Created the final submission folder, consolidated this Learning Journal, added glossary/checklist/video plan, updated README links, and preserved assignment-relevant decisions. |
+| Final video slides and exports | Build modern LaTeX slides for the final video in the app's visual style, inspect the PDF as screenshots, remove decorative background elements, add a subtle HTW Dresden logo, align slide wording with the video plan, and export all slides as PNG images. | Created and polished the final Beamer slide deck, generated the PDF, performed screenshot-based visual QA, added HTW logo assets, and exported 10 slide PNGs for video editing. |
+| Repository hygiene and final push checks | Before submission, scan the repository for profanity, suspicious artifacts, temporary files, local logs, secrets, and local-only Git refs. Also pull/push final changes safely and avoid exposing ignored local files or local checkpoint refs. | Verified tracked files and Git history for obvious issues, identified ignored local files that should not be zipped, anonymized a local path in submission docs, and documented safe GitLab push guidance. |
 
-AI assistance was used for implementation and debugging, but the project decisions were still reviewed against the assignment constraints, local test results, and the actual repository state. Important prompts, problems, and outcomes are preserved in more detail in `docs/session-summaries/`.
+AI assistance was used for implementation and debugging, but the project decisions were still reviewed against the assignment constraints, local test results, emulator/APK behavior, and the actual repository state. Important prompts, problems, and outcomes are preserved in more detail in `docs/session-summaries/`.

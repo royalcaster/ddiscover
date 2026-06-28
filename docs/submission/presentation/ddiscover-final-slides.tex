@@ -20,8 +20,13 @@
       \setsansfont{Noto Sans}
       \setmainfont{Noto Sans}
     }{%
-      \setsansfont{TeX Gyre Heros}
-      \setmainfont{TeX Gyre Heros}
+      \IfFontExistsTF{Poppins}{%
+        \setsansfont{Poppins}
+        \setmainfont{Poppins}
+      }{%
+        \setsansfont{TeX Gyre Heros}
+        \setmainfont{TeX Gyre Heros}
+      }%
     }%
   }%
 \fi
@@ -64,8 +69,6 @@
 
 \newcommand{\DeckTitle}{DDiscover}
 \newcommand{\DeckSubtitle}{A mobile app for Dresden student club events}
-\newcommand{\RepoPath}{C:/Users/klaus/Documents/GitHub/ddiscover}
-
 \newcommand{\slidebg}{%
   \usebackgroundtemplate{%
     \begin{tikzpicture}[remember picture,overlay]
@@ -158,7 +161,7 @@
 
     \fill[AppYellow] ([xshift=7mm,yshift=16mm]current page.south west) rectangle ++(32mm,1.2mm);
     \node[anchor=west,text=AppText,font=\small] at ([xshift=7mm,yshift=11.5mm]current page.south west) {HTW Dresden Mobile Networks APL};
-    \node[anchor=west,text=AppMuted,font=\scriptsize] at ([xshift=7mm,yshift=6.8mm]current page.south west) {Philip Popplutz \quad Gabriel Pechstein};
+    \node[anchor=west,text=AppMuted,font=\scriptsize] at ([xshift=7mm,yshift=6.8mm]current page.south west) {Philip Poplutz \quad Gabriel Pechstein};
 
     \begin{scope}[shift={(current page.south west)}]
       \phoneframe{9.85}{1.35}{3.0}{entdecken-after-marker-clean.png}

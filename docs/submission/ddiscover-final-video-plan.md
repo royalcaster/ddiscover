@@ -6,7 +6,7 @@ Audience: Mobile Networks course participants and instructors. The video should 
 
 Presenter split:
 
-- Philip Popplutz: product framing, user problem, app concept, and screen walkthrough.
+- Philip Poplutz: product framing, user problem, app concept, and screen walkthrough.
 - Gabriel Pechstein: technical stack, backend, authentication, data import, testing, CI, and runtime problems.
 
 ## Slide Plan
