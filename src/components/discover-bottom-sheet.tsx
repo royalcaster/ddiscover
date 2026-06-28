@@ -1,11 +1,12 @@
 import type { Id } from '../../convex/_generated/dataModel';
-import { Building2, CalendarClock, ExternalLink, GripHorizontal, Heart, MapPin, Music2 } from 'lucide-react-native';
+import { Building2, CalendarClock, ExternalLink, GripHorizontal, Heart, MapPin, Music2, Share2 } from 'lucide-react-native';
 import React from 'react';
 import {
   Animated,
   Image as NativeImage,
   PanResponder,
   Pressable,
+  Share,
   StyleSheet,
   View,
 } from 'react-native';
@@ -118,6 +119,27 @@ export function DiscoverBottomSheet({
   const clubFavorited = selectedClub ? isClubFavorited(selectedClub._id) : false;
   const sheetBackgroundColor = resolvedTheme === 'light' ? 'hsl(0 0% 97%)' : colors.card;
   const rippleColor = resolvedTheme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
+
+  const shareSelectedClub = React.useCallback(() => {
+    if (!selectedClub) return;
+
+    const eventText = nextEvent
+      ? `\nNächstes Event: ${nextEvent.title} (${formatDateTime(nextEvent.startsAt)})`
+      : '';
+    const locationText = selectedClub.addressLine ?? selectedClub.city ?? 'Dresden';
+    const url = selectedClub.websiteUrl ?? nextEvent?.sourceUrl;
+
+    void Share.share({
+      message: [
+        `${selectedClub.name} auf DDiscover`,
+        locationText,
+        eventText.trim(),
+        url,
+      ].filter(Boolean).join('\n'),
+      title: selectedClub.name,
+      url,
+    });
+  }, [nextEvent, selectedClub]);
 
   const animateTo = React.useCallback(
     (toValue: number, nextState?: SheetSnapState) => {
@@ -265,6 +287,15 @@ export function DiscoverBottomSheet({
               </View>
 
               <View className="flex-row items-center gap-2">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Studentenclub teilen"
+                  android_ripple={{ color: rippleColor, borderless: true }}
+                  className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
+                  onPress={shareSelectedClub}>
+                  <Share2 size={19} color={colors.foreground} />
+                </Pressable>
+
                 {selectedClub.websiteUrl ? (
                   <Pressable
                     accessibilityRole="button"
@@ -351,7 +382,7 @@ export function DiscoverBottomSheet({
                     android_ripple={{ color: rippleColor }}
                     className="rounded-full"
                     onPress={() => onOpenEvent(nextEvent._id)}>
-                    <CalendarClock size={14} />
+                    <CalendarClock size={14} color={colors.foreground} />
                     <Text>Details</Text>
                   </Button>
 
@@ -362,7 +393,7 @@ export function DiscoverBottomSheet({
                       android_ripple={{ color: rippleColor }}
                       className="rounded-full"
                       onPress={() => onOpenSource(nextEvent.sourceUrl)}>
-                      <ExternalLink size={14} />
+                      <ExternalLink size={14} color={colors.foreground} />
                       <Text>Quelle</Text>
                     </Button>
                   ) : null}
