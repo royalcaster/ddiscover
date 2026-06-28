@@ -1,5 +1,7 @@
 # Development Diary / Learning Journal
 
+Note: All documented development sessions were completed together by Philip Popplutz and Gabriel Pechstein, either on site at HTW facilities or remotely via Discord.
+
 ## Purpose
 
 This document is the submission-ready Learning Journal basis for DDiscover. It consolidates the daily session summaries from `docs/session-summaries/` into the required format: date, time, approximate duration, activities, problems, solutions, and AI support. The session summaries remain the detailed technical evidence.
@@ -12,6 +14,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-23
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 16:00-23:40 CEST
 - Duration: ~7h 40m
 - Activities:
@@ -36,6 +39,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-24
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 00:00-02:10 CEST, with later follow-up work during the day
 - Duration: ~4h
 - Activities:
@@ -58,6 +62,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-25
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: afternoon/evening CEST
 - Duration: ~4h
 - Activities:
@@ -82,6 +87,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-04-26
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: CEST
 - Duration: ~30m
 - Activities:
@@ -97,6 +103,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-17
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 17:26 CEST
 - Duration: ~25m
 - Activities:
@@ -112,6 +119,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-18
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: daytime CEST
 - Duration: ~1h 30m
 - Activities:
@@ -131,6 +139,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-20
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: CEST
 - Duration: ~30m
 - Activities:
@@ -146,6 +155,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-05-31
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: daytime/evening CEST
 - Duration: ~3h
 - Activities:
@@ -171,6 +181,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-15
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 12:00-15:35 CEST
 - Duration: ~1h 10m active work
 - Activities:
@@ -196,6 +207,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-16
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 13:15-16:11 CEST
 - Duration: ~1h active work
 - Activities:
@@ -216,6 +228,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-23
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 12:06-13:00 CEST
 - Duration: ~1h
 - Activities:
@@ -237,6 +250,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-24
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 13:20-23:25 CEST
 - Duration: ~3h 20m active work
 - Activities:
@@ -264,6 +278,7 @@ DDiscover is an HTW Dresden Mobile Networks APL project. The app helps students 
 
 ### 2026-06-25
 
+- Participants: Philip Popplutz, Gabriel Pechstein
 - Time: 01:35-19:45 CEST
 - Duration: ~3h active work
 - Activities:

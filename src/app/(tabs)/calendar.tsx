@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
 import { Text } from '@/components/ui/text';
 import { useFavorites } from '@/hooks/use-favorites';
 import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
@@ -28,11 +29,26 @@ const HORIZONTAL_DRAG_THRESHOLD = 10;
 const PAGE_SWIPE_DISTANCE = 56;
 const PAGE_SWIPE_VELOCITY = 0.35;
 
+type CalendarClub = {
+  _id: Id<'clubs'>;
+  name: string;
+};
+
+type CalendarEvent = {
+  _id: Id<'events'>;
+  clubId: Id<'clubs'>;
+  imageUrl?: string | null;
+  locationName?: string;
+  startsAt: number;
+  title: string;
+};
+
+type TranslationFunction = ReturnType<typeof useLanguage>['t'];
+
 const styles = StyleSheet.create({
   dayCell: {
     flex: 1,
     height: 54,
-    zIndex: 1,
   },
   dayHighlight: {
     bottom: 0,
@@ -45,6 +61,13 @@ const styles = StyleSheet.create({
     height: 54,
     overflow: 'hidden',
     position: 'relative',
+  },
+  dayTextRow: {
+    bottom: 0,
+    flexDirection: 'row',
+    left: 0,
+    position: 'absolute',
+    top: 0,
   },
   eventThumbnail: {
     height: '100%',
@@ -111,16 +134,176 @@ function inferGenre(title: string, translate: ReturnType<typeof useLanguage>['t'
   return translate('genres.studentClubEvent');
 }
 
+type CalendarEventRowProps = {
+  club?: CalendarClub;
+  event: CalendarEvent;
+  favoriteFillColor: string;
+  favoriteStrokeColor: string;
+  favorited: boolean;
+  isLast: boolean;
+  locale: string;
+  mutedIconColor: string;
+  rippleColor: string;
+  t: TranslationFunction;
+  onToggleFavorite: (eventId: Id<'events'>) => void;
+};
+
+const CalendarEventRow = React.memo(function CalendarEventRow({
+  club,
+  event,
+  favoriteFillColor,
+  favoriteStrokeColor,
+  favorited,
+  isLast,
+  locale,
+  mutedIconColor,
+  rippleColor,
+  t,
+  onToggleFavorite,
+}: CalendarEventRowProps) {
+  const imageSource = event.imageUrl ? { uri: event.imageUrl } : EVENT_THUMBNAIL;
+
+  return (
+    <Pressable
+      android_ripple={{ color: rippleColor }}
+      className={
+        isLast
+          ? 'flex-row gap-3 px-3 py-3'
+          : 'flex-row gap-3 border-b border-border px-3 py-3'
+      }
+      onPress={() => openEventDetail(event._id)}>
+      <View className="h-[76px] w-[76px] overflow-hidden rounded-[10px] bg-secondary">
+        <NativeImage source={imageSource} resizeMode="cover" style={styles.eventThumbnail} />
+        {event.imageUrl ? (
+          <View className="absolute inset-0 bg-black/10 dark:bg-black/20" />
+        ) : (
+          <View className="absolute inset-0 items-center justify-center bg-black/20 dark:bg-black/35">
+            <Music2 size={20} color="#ffffff" />
+          </View>
+        )}
+      </View>
+
+      <View className="min-w-0 flex-1 gap-1">
+        <Text className="text-muted-foreground text-xs font-semibold">{formatTime(event.startsAt, locale)}</Text>
+        <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+          {event.title}
+        </Text>
+        <Text className="text-muted-foreground text-xs" numberOfLines={1}>
+          {club?.name ?? event.locationName ?? t('calendar.fallbackClub')}
+        </Text>
+        <Text className="text-muted-foreground/70 text-xs" numberOfLines={1}>
+          {inferGenre(event.title, t)}
+        </Text>
+      </View>
+
+      <Pressable
+        android_ripple={{ color: rippleColor, borderless: true }}
+        className="h-10 w-10 items-center justify-center rounded-full"
+        onPress={(pressEvent) => {
+          pressEvent.stopPropagation();
+          onToggleFavorite(event._id);
+        }}>
+        <Heart
+          size={19}
+          color={favorited ? favoriteStrokeColor : mutedIconColor}
+          fill={favorited ? favoriteFillColor : 'transparent'}
+        />
+      </Pressable>
+    </Pressable>
+  );
+});
+
+type CalendarDayPageProps = {
+  clubsById: Map<Id<'clubs'>, CalendarClub>;
+  contentWidth: number;
+  dayEvents: CalendarEvent[];
+  errorMessage?: string;
+  favoriteFillColor: string;
+  favoriteStrokeColor: string;
+  isEventFavorited: (eventId: Id<'events'>) => boolean;
+  isLoading: boolean;
+  locale: string;
+  mutedIconColor: string;
+  pageWidth: number;
+  rippleColor: string;
+  t: TranslationFunction;
+  onToggleFavorite: (eventId: Id<'events'>) => void;
+};
+
+const CalendarDayPage = React.memo(function CalendarDayPage({
+  clubsById,
+  contentWidth,
+  dayEvents,
+  errorMessage,
+  favoriteFillColor,
+  favoriteStrokeColor,
+  isEventFavorited,
+  isLoading,
+  locale,
+  mutedIconColor,
+  pageWidth,
+  rippleColor,
+  t,
+  onToggleFavorite,
+}: CalendarDayPageProps) {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.pageContent}
+      directionalLockEnabled
+      nestedScrollEnabled
+      removeClippedSubviews={false}
+      showsVerticalScrollIndicator={false}
+      style={{ width: pageWidth }}>
+      <View
+        className="overflow-hidden rounded-[14px] border border-border bg-card"
+        style={{ width: contentWidth }}>
+        {isLoading ? (
+          <View className="px-4 py-6">
+            <Text className="text-muted-foreground text-sm">{t('calendar.eventsLoading')}</Text>
+          </View>
+        ) : errorMessage ? (
+          <View className="px-4 py-6">
+            <Text className="text-destructive text-sm">
+              {t('errors.convexLoadPrefix', { message: errorMessage })}
+            </Text>
+          </View>
+        ) : dayEvents.length === 0 ? (
+          <View className="px-4 py-6">
+            <Text className="text-muted-foreground text-sm">{t('calendar.noEventsForDay')}</Text>
+          </View>
+        ) : (
+          dayEvents.map((event, index) => (
+            <CalendarEventRow
+              key={event._id}
+              club={clubsById.get(event.clubId)}
+              event={event}
+              favoriteFillColor={favoriteFillColor}
+              favoriteStrokeColor={favoriteStrokeColor}
+              favorited={isEventFavorited(event._id)}
+              isLast={index === dayEvents.length - 1}
+              locale={locale}
+              mutedIconColor={mutedIconColor}
+              rippleColor={rippleColor}
+              t={t}
+              onToggleFavorite={onToggleFavorite}
+            />
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+});
+
 export default function CalendarScreen() {
   const theme = useTheme();
   const { locale, t } = useLanguage();
   const { width: windowWidth } = useWindowDimensions();
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 96 });
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
-  const events = React.useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
-  const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
+  const events = React.useMemo<CalendarEvent[]>(() => eventsQuery.data ?? [], [eventsQuery.data]);
+  const clubs = React.useMemo<CalendarClub[]>(() => clubsQuery.data ?? [], [clubsQuery.data]);
   const favorites = useFavorites();
-  const [activeDayIndex, setActiveDayIndex] = React.useState(0);
+  const { isEventFavorited, toggle: toggleFavorite } = favorites;
   const [daySelectorWidth, setDaySelectorWidth] = React.useState(0);
   const previousWindowWidth = React.useRef(windowWidth);
   const activeDayIndexRef = React.useRef(0);
@@ -140,20 +323,31 @@ export default function CalendarScreen() {
   }, []);
 
   const contentWidth = Math.max(0, Math.min(windowWidth - SCREEN_HORIZONTAL_PADDING, MAX_CONTENT_WIDTH));
+  const pageWidth = contentWidth;
   const dayCellWidth = daySelectorWidth / CALENDAR_DAY_COUNT;
+  const lastPageTranslateX = -(days.length - 1) * pageWidth;
   const dayHighlightTranslateX = React.useMemo(
     () =>
       pageTranslateX.interpolate({
-        inputRange: days.map((_, index) => -index * windowWidth),
-        outputRange: days.map((_, index) => index * dayCellWidth),
+        inputRange: [lastPageTranslateX, 0],
+        outputRange: [(days.length - 1) * dayCellWidth, 0],
         extrapolate: 'clamp',
       }),
-    [dayCellWidth, days, pageTranslateX, windowWidth],
+    [dayCellWidth, days.length, lastPageTranslateX, pageTranslateX],
+  );
+  const dayHighlightTextTranslateX = React.useMemo(
+    () =>
+      pageTranslateX.interpolate({
+        inputRange: [lastPageTranslateX, 0],
+        outputRange: [-(days.length - 1) * dayCellWidth, 0],
+        extrapolate: 'clamp',
+      }),
+    [dayCellWidth, days.length, lastPageTranslateX, pageTranslateX],
   );
 
   const clubsById = React.useMemo(() => new Map(clubs.map((club) => [club._id, club])), [clubs]);
   const eventsByDay = React.useMemo(() => {
-    const groupedEvents = new Map<string, typeof events>();
+    const groupedEvents = new Map<string, CalendarEvent[]>();
 
     for (const day of days) {
       groupedEvents.set(day.key, []);
@@ -170,25 +364,20 @@ export default function CalendarScreen() {
     return groupedEvents;
   }, [days, events]);
 
-  React.useEffect(() => {
-    activeDayIndexRef.current = activeDayIndex;
-  }, [activeDayIndex]);
-
   const animateToDay = React.useCallback(
     (index: number) => {
       const boundedIndex = Math.max(0, Math.min(days.length - 1, index));
       activeDayIndexRef.current = boundedIndex;
-      setActiveDayIndex(boundedIndex);
 
       Animated.spring(pageTranslateX, {
-        toValue: -boundedIndex * windowWidth,
+        toValue: -boundedIndex * pageWidth,
         useNativeDriver: true,
         damping: 26,
         stiffness: 260,
         mass: 0.85,
       }).start();
     },
-    [days.length, pageTranslateX, windowWidth],
+    [days.length, pageTranslateX, pageWidth],
   );
 
   React.useEffect(() => {
@@ -196,9 +385,9 @@ export default function CalendarScreen() {
       return;
     }
 
-    pageTranslateX.setValue(-activeDayIndexRef.current * windowWidth);
+    pageTranslateX.setValue(-activeDayIndexRef.current * pageWidth);
     previousWindowWidth.current = windowWidth;
-  }, [pageTranslateX, windowWidth]);
+  }, [pageTranslateX, pageWidth, windowWidth]);
 
   const selectDay = React.useCallback(
     (index: number) => {
@@ -206,6 +395,16 @@ export default function CalendarScreen() {
     },
     [animateToDay],
   );
+
+  const toggleEventFavorite = React.useCallback(
+    (eventId: Id<'events'>) => {
+      void toggleFavorite({ entityType: 'event', eventId });
+    },
+    [toggleFavorite],
+  );
+
+  const calendarErrorMessage = eventsQuery.error?.message ?? clubsQuery.error?.message;
+  const isCalendarLoading = eventsQuery.isLoading || clubsQuery.isLoading;
 
   const pagePanResponder = React.useMemo(
     () =>
@@ -234,7 +433,7 @@ export default function CalendarScreen() {
           });
         },
         onPanResponderMove: (_, gestureState) => {
-          const minTranslateX = -(days.length - 1) * windowWidth;
+          const minTranslateX = -(days.length - 1) * pageWidth;
           const maxTranslateX = 0;
           const rawTranslateX = dragStartTranslateX.current + gestureState.dx;
           const boundedTranslateX =
@@ -269,7 +468,7 @@ export default function CalendarScreen() {
           animateToDay(activeDayIndexRef.current);
         },
       }),
-    [animateToDay, days.length, pageTranslateX, windowWidth],
+    [animateToDay, days.length, pageTranslateX, pageWidth],
   );
 
   return (
@@ -281,6 +480,18 @@ export default function CalendarScreen() {
           className="flex-row"
           onLayout={(event) => setDaySelectorWidth(event.nativeEvent.layout.width)}
           style={styles.daySelector}>
+          <View pointerEvents="none" style={[styles.dayTextRow, { width: daySelectorWidth }]}>
+            {days.map((day) => (
+              <View key={day.key} className="items-center justify-center px-1" style={styles.dayCell}>
+                <Text className="text-[11px] font-semibold text-foreground">
+                  {day.isToday ? t('common.today') : formatWeekday(day.timestamp, locale)}
+                </Text>
+                <Text className="text-[13px] font-bold text-foreground">
+                  {formatDayNumber(day.timestamp, locale)}
+                </Text>
+              </View>
+            ))}
+          </View>
           {dayCellWidth > 0 ? (
             <Animated.View
               pointerEvents="none"
@@ -291,139 +502,72 @@ export default function CalendarScreen() {
                   transform: [{ translateX: dayHighlightTranslateX }],
                   width: dayCellWidth,
                 },
-              ]}
-            />
+              ]}>
+              <Animated.View
+                style={[
+                  styles.dayTextRow,
+                  {
+                    transform: [{ translateX: dayHighlightTextTranslateX }],
+                    width: daySelectorWidth,
+                  },
+                ]}>
+                {days.map((day) => (
+                  <View key={day.key} className="items-center justify-center px-1" style={styles.dayCell}>
+                    <Text className="text-[11px] font-semibold text-primary-foreground">
+                      {day.isToday ? t('common.today') : formatWeekday(day.timestamp, locale)}
+                    </Text>
+                    <Text className="text-[13px] font-bold text-primary-foreground">
+                      {formatDayNumber(day.timestamp, locale)}
+                    </Text>
+                  </View>
+                ))}
+              </Animated.View>
+            </Animated.View>
           ) : null}
-          {days.map((day, index) => {
-            const selected = activeDayIndex === index;
-            return (
-              <Pressable
-                key={day.key}
-                android_ripple={{ color: theme.secondary }}
-                className="items-center justify-center rounded-[12px] px-1"
-                onPress={() => selectDay(index)}
-                style={styles.dayCell}>
-                <Text
-                  className={
-                    selected
-                      ? 'text-[11px] font-semibold text-primary-foreground'
-                      : 'text-[11px] font-semibold text-foreground'
-                  }>
-                  {day.isToday ? t('common.today') : formatWeekday(day.timestamp, locale)}
-                </Text>
-                <Text
-                  className={
-                    selected
-                      ? 'text-[13px] font-bold text-primary-foreground'
-                      : 'text-[13px] font-bold text-foreground'
-                  }>
-                  {formatDayNumber(day.timestamp, locale)}
-                </Text>
-              </Pressable>
-            );
-          })}
+          {days.map((day, index) => (
+            <Pressable
+              key={day.key}
+              android_ripple={{ color: theme.secondary }}
+              className="items-center justify-center rounded-[12px] px-1"
+              onPress={() => selectDay(index)}
+              style={styles.dayCell}
+            />
+          ))}
         </View>
       </View>
 
-      <View className="flex-1" style={styles.pagerViewport} {...pagePanResponder.panHandlers}>
+      <View
+        className="flex-1"
+        removeClippedSubviews={false}
+        style={[styles.pagerViewport, { alignSelf: 'center', width: pageWidth }]}
+        {...pagePanResponder.panHandlers}>
         <Animated.View
           style={[
             styles.pagerTrack,
             {
               transform: [{ translateX: pageTranslateX }],
-              width: windowWidth * days.length,
+              width: pageWidth * days.length,
             },
           ]}>
-          {days.map((day) => {
-            const dayEvents = eventsByDay.get(day.key) ?? [];
-
-            return (
-              <ScrollView
-                key={day.key}
-                contentContainerStyle={styles.pageContent}
-                directionalLockEnabled
-                nestedScrollEnabled
-                showsVerticalScrollIndicator={false}
-                style={{ width: windowWidth }}>
-                <View
-                  className="overflow-hidden rounded-[14px] border border-border bg-card"
-                  style={{ width: contentWidth }}>
-                  {eventsQuery.isLoading || clubsQuery.isLoading ? (
-                    <View className="px-4 py-6">
-                      <Text className="text-muted-foreground text-sm">{t('calendar.eventsLoading')}</Text>
-                    </View>
-                  ) : eventsQuery.error || clubsQuery.error ? (
-                    <View className="px-4 py-6">
-                      <Text className="text-destructive text-sm">
-                        {t('errors.convexLoadPrefix', { message: eventsQuery.error?.message ?? clubsQuery.error?.message ?? '' })}
-                      </Text>
-                    </View>
-                  ) : dayEvents.length === 0 ? (
-                    <View className="px-4 py-6">
-                      <Text className="text-muted-foreground text-sm">{t('calendar.noEventsForDay')}</Text>
-                    </View>
-                  ) : (
-                    dayEvents.map((event, index) => {
-                      const club = clubsById.get(event.clubId);
-                      const favorited = favorites.isEventFavorited(event._id);
-                      const isLast = index === dayEvents.length - 1;
-                      const imageSource = event.imageUrl ? { uri: event.imageUrl } : EVENT_THUMBNAIL;
-
-                      return (
-                        <Pressable
-                          key={event._id}
-                          android_ripple={{ color: theme.secondary }}
-                          className={
-                            isLast
-                              ? 'flex-row gap-3 px-3 py-3'
-                              : 'flex-row gap-3 border-b border-border px-3 py-3'
-                          }
-                          onPress={() => openEventDetail(event._id)}>
-                          <View className="h-[76px] w-[76px] overflow-hidden rounded-[10px] bg-secondary">
-                            <NativeImage source={imageSource} resizeMode="cover" style={styles.eventThumbnail} />
-                            {event.imageUrl ? (
-                              <View className="absolute inset-0 bg-black/10 dark:bg-black/20" />
-                            ) : (
-                              <View className="absolute inset-0 items-center justify-center bg-black/20 dark:bg-black/35">
-                                <Music2 size={20} color="#ffffff" />
-                              </View>
-                            )}
-                          </View>
-
-                          <View className="min-w-0 flex-1 gap-1">
-                            <Text className="text-muted-foreground text-xs font-semibold">{formatTime(event.startsAt, locale)}</Text>
-                            <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-                              {event.title}
-                            </Text>
-                            <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-                              {club?.name ?? event.locationName ?? t('calendar.fallbackClub')}
-                            </Text>
-                            <Text className="text-muted-foreground/70 text-xs" numberOfLines={1}>
-                              {inferGenre(event.title, t)}
-                            </Text>
-                          </View>
-
-                          <Pressable
-                            android_ripple={{ color: theme.secondary, borderless: true }}
-                            className="h-10 w-10 items-center justify-center rounded-full"
-                            onPress={(pressEvent) => {
-                              pressEvent.stopPropagation();
-                              void favorites.toggle({ entityType: 'event', eventId: event._id });
-                            }}>
-                            <Heart
-                              size={19}
-                              color={favorited ? theme.foreground : theme.mutedForeground}
-                              fill={favorited ? theme.foreground : 'transparent'}
-                            />
-                          </Pressable>
-                        </Pressable>
-                      );
-                    })
-                  )}
-                </View>
-              </ScrollView>
-            );
-          })}
+          {days.map((day) => (
+            <CalendarDayPage
+              key={day.key}
+              clubsById={clubsById}
+              contentWidth={contentWidth}
+              dayEvents={eventsByDay.get(day.key) ?? []}
+              errorMessage={calendarErrorMessage}
+              favoriteFillColor={theme.foreground}
+              favoriteStrokeColor={theme.foreground}
+              isEventFavorited={isEventFavorited}
+              isLoading={isCalendarLoading}
+              locale={locale}
+              mutedIconColor={theme.mutedForeground}
+              pageWidth={pageWidth}
+              rippleColor={theme.secondary}
+              t={t}
+              onToggleFavorite={toggleEventFavorite}
+            />
+          ))}
         </Animated.View>
       </View>
     </SafeAreaView>

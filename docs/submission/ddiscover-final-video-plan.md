@@ -4,114 +4,162 @@ Target length: 10 minutes.
 
 Audience: Mobile Networks course participants and instructors. The video should explain what was built, why it was built this way, where the hard problems were, and what was learned.
 
+Presenter split:
+
+- Philip Popplutz: product framing, user problem, app concept, and screen walkthrough.
+- Gabriel Pechstein: technical stack, backend, authentication, data import, testing, CI, and runtime problems.
+
 ## Slide Plan
 
-### 1. Title and Project Context (0:00-0:45)
+### 1. Title And Project Context (0:00-0:45)
+
+Owner: Philip
 
 - DDiscover: mobile discovery app for Dresden student club events.
-- Problem: student club events are spread across sources and are not easy to explore by location, time, and route.
-- Goal: one mobile-first view for finding events, seeing where they happen, and navigating there.
+- Course context: HTW Dresden Mobile Networks APL project.
+- Product goal: one mobile-first way to find events, see where they happen, and plan how to get there.
 
 Speaker notes:
-"DDiscover is my APL project for Mobile Networks. The idea is simple: students should be able to open one app, see which student clubs have events, check the details, and plan how to get there."
+"DDiscover is our APL project for Mobile Networks. The idea is simple: students should be able to open one app, see which Dresden student clubs have events, check the details, and decide how to get there. We focused on a realistic mobile use case instead of a generic event list, because the important moment is usually quick: what is happening tonight, where is it, and is it worth going there?"
 
-### 2. User-Facing App Overview (0:45-2:00)
+### 2. Problem And Product Idea (0:45-1:45)
+
+Owner: Philip
+
+- Problem: event information is split across club pages, feeds, posts, and word of mouth.
+- Users often care about place, time, and route, not only an event list.
+- Product answer: a map-first mobile flow for place, time, details, and public transport.
+- MVP focus: Discover, Calendar, Event Details, route planning, and Profile.
+
+Speaker notes:
+"The problem is not that events do not exist. The problem is that they are scattered across club pages, social posts, feeds, and word of mouth. For students, the useful questions are: what is happening near me, when is it happening, and how do I get there? That is why the app starts with discovery instead of an admin-style list. The MVP is intentionally narrow: map, calendar, event details, route planning, and a profile area for personal features."
+
+### 3. App Screen Overview (1:45-3:20)
+
+Owner: Philip
 
 - Discover map with student club markers.
-- Bottom sheet with selected club and next event.
-- Calendar with upcoming imported events.
-- Event detail screen with image, club/location context, and route planning.
-- Profile/auth area for sign-in and future saved favorites.
+- Pull-up drawer with selected club, next event, website, share, and favorite actions.
+- Calendar with imported upcoming events and date-based browsing.
+- Event detail screen with image, club/location context, source link, and DVB route planning.
+- Profile area for sign-in, settings, language/theme, and favorites.
 
 Speaker notes:
-"The first screen is intentionally map-first. For this use case, location is more useful than a generic feed. The calendar is the second main entry point for users who already know they want to browse by date."
+"The first screen is intentionally map-first because location matters for this use case. The drawer gives quick context without leaving the map, including the selected club, the next event, a source link, sharing, and favorites. The calendar is the second main entry point for users who already know they want to browse by date. Event details then bring together the image, time, location, source, and route planning. The profile area is where sign-in, language, theme, and saved favorites belong, so browsing can stay guest-first."
 
-### 3. Architecture Overview (2:00-3:10)
+Handoff to Gabriel:
+"That is the user-facing product. Gabriel will now explain the technical system behind it."
 
-- React Native + Expo for the mobile app.
-- Convex for database, functions, scheduled imports, and storage.
-- Clerk for authentication.
-- MapLibre for the map.
-- VDSC feed, Nominatim, and DVB as external data/service inputs.
+### 4. Technical Stack And System Shape (3:20-4:25)
+
+Owner: Gabriel
+
+- React Native + Expo for the mobile app and native Android builds.
+- Convex for database, backend functions, scheduled imports, and file storage.
+- Clerk for authentication and Google sign-in.
+- MapLibre for the native map.
+- DVB, Nominatim, and VDSC as external data/service inputs.
 
 Speaker notes:
-"The architecture is small but complete. The app is a React Native client, Convex owns the data and backend functions, and external services are only used behind controlled backend actions where that makes sense."
+"The app is a React Native client built with Expo, because we needed a real mobile UI and native Android builds for testing. Convex owns the backend side: database tables, functions, cron imports, public HTTP reads, and event image storage. Clerk handles authentication and Google sign-in. For maps we use MapLibre, and for external data we integrate the VDSC event feed, Nominatim geocoding, and DVB route planning. The main design idea is that the mobile app stays thin while Convex handles data normalization and service boundaries."
 
-### 4. Deep Dive: Event Import Pipeline (3:10-4:40)
+### 5. Backend And Import Pipeline (4:25-5:40)
+
+Owner: Gabriel
 
 - VDSC JSON feed is used instead of fragile HTML scraping.
-- Parser normalizes external event data.
-- Convex upsert avoids duplicate imports using source/source key.
+- Parser normalizes external event data before it reaches the database.
+- Convex upsert avoids duplicate imports through source/source key fields.
 - Cron imports data every 24 hours.
 - Event images are scraped from event detail metadata and stored in Convex Storage.
 
 Speaker notes:
-"A key decision was to avoid browser scraping. The VDSC page uses a structured JSON calendar feed, so the import is simpler, faster, and easier to test. The importer is idempotent: running it again updates existing events instead of duplicating them."
+"The importer is designed to be repeatable. A key decision was to avoid browser scraping in the core path. The VDSC page exposes a structured JSON calendar feed, so the import is simpler, faster, and much easier to test. The parser normalizes fields before they reach the database, and the upsert uses a source key so running the importer again updates existing events instead of creating duplicates. Event images are stored in Convex Storage, which keeps the app independent from hotlinking and makes generated image URLs available to the mobile client."
 
-### 5. Deep Dive: Location and Map Reliability (4:40-5:55)
+### 6. Auth, Favorites, And User Data (5:40-6:35)
 
-- Club coordinates come from reviewed Convex rows first.
+Owner: Gabriel
+
+- Clerk provides Google sign-in in the profile flow.
+- Convex verifies authenticated favorites through Clerk JWTs.
+- Favorites are saved per user account.
+- APK runtime auth and Convex communication required extra debugging.
+- User-facing error messages hide provider details, while technical details stay in logs.
+
+Speaker notes:
+"Authentication is deliberately not required for browsing. Users can use the map, calendar, and event details as guests, which keeps the first experience lightweight. Sign-in becomes relevant for personal features like favorites. Clerk provides the user session, and Convex verifies favorite mutations through Clerk JWTs, so saved data belongs to the signed-in account. The complicated part was the Clerk-to-Convex handoff in standalone APK builds, because local development and installed APK behavior were not always the same. That is why this part needed real device testing and careful error handling."
+
+### 7. Maps, Location, And Native Runtime Problems (6:35-7:35)
+
+Owner: Gabriel
+
+- Club coordinates prefer reviewed Convex rows first.
 - Curated fallback coordinates exist for MVP reliability.
 - Nominatim geocoding is cache-first to avoid repeated external calls.
 - MapLibre native layers are used for performant marker rendering.
+- APK-only Convex data loading bugs required inspecting built config and device logs.
 
 Speaker notes:
-"Geocoding was useful, but not reliable enough as the only source for an MVP. One wrong club location is very visible on a map. That is why reviewed coordinates are preferred, with geocoding as enrichment instead of the only truth."
+"For maps, one wrong coordinate is immediately visible to the user. Geocoding helps, but it is not reliable enough as the only source for a student-facing MVP, so reviewed coordinates are preferred and curated fallbacks keep known clubs usable. Nominatim is used cache-first so we do not repeatedly call an external service for the same lookup. Another hard problem was that Convex data loaded locally but failed in one standalone APK build. The final causes were runtime configuration and URL normalization, so we had to inspect the built APK, device logs, and the actual URLs created at runtime."
 
-### 6. Deep Dive: APK Runtime Issues (5:55-7:05)
+### 8. Testing, CI, And Submission Builds (7:35-8:35)
 
-- Local dev build and standalone APK behaved differently.
-- Convex realtime WebSocket path was problematic in APK context.
-- Public data loading was isolated through Convex HTTP queries.
-- A trailing slash in the CI Convex URL caused `//api/query`; URL normalization fixed it.
+Owner: Gabriel
 
-Speaker notes:
-"The hardest bug was not a TypeScript problem. The app worked locally but failed in the APK. The final root causes were runtime configuration and network behavior, so logging and inspecting the built APK config became necessary."
-
-### 7. CI and Device Testing (7:05-7:50)
-
-- Manual GitHub Actions APK build for phone testing.
-- Manual GitLab CI APK job prepared for HTW GitLab.
+- Backend/parser logic is covered with Vitest and Convex tests.
+- TypeScript and lint are used as regular validation gates.
+- Manual GitHub Actions APK build supports phone testing.
+- Manual GitLab CI APK job is prepared for HTW GitLab.
 - Build config validation checks required public env values before Android build.
-- Physical device testing used sideloaded APKs and ADB logs.
 
 Speaker notes:
-"Because Expo Go was not enough for the native modules, the project needed APK builds. The CI workflow makes this repeatable and catches missing public configuration before waiting for the full Android build."
+"Testing is split by risk. Parser and backend behavior are covered with Vitest and Convex tests, currently 19 tests around parsing, imports, geocoding, favorites, and image handling. TypeScript and lint catch integration mistakes before they become runtime issues. For actual mobile behavior we needed APKs, because Expo Go was not enough for the native modules and the dev-client workflow. The CI workflow makes APK generation repeatable, and the build configuration checks fail early if required public values are missing. The manual phone loop was still important: build, install, inspect logs, and repeat."
 
-### 8. Difficulties (7:50-8:50)
+Handoff to Philip:
+"After the technical side, Philip will summarize the final product state and lessons from the user perspective."
 
-- Android emulator and ADB stability.
-- Expo SDK/dev-client setup.
-- Clerk and Convex auth handoff for favorites.
-- APK-only Convex data loading bugs.
-- Map marker rendering and bottom-sheet interaction polish.
+### 9. Difficulties And Lessons Learned (8:35-9:30)
 
-Speaker notes:
-"Most time was not spent on the happy-path UI. It was spent on making the development and runtime environment predictable enough to trust the app on a real device."
+Owner: Philip starts, Gabriel adds technical detail
 
-### 9. Lessons Learned (8:50-9:40)
-
-- Prefer structured data feeds over scraping rendered websites.
-- Test native mobile behavior on APKs early.
-- Keep external service URLs normalized and validated in CI.
-- Use reviewed data for user-visible location accuracy.
-- Record decisions and root causes while working, not at the end.
+- Philip:
+  - Product scope had to stay focused around the real discovery loop.
+  - Map interaction and drawer usability needed repeated refinement.
+  - A mobile app feels unfinished quickly if small interactions are slow or visually inconsistent.
+- Gabriel:
+  - Most technical risk came from system boundaries: Android tooling, CI, auth handoff, external APIs, and APK runtime behavior.
+  - Device/runtime validation was necessary because local development was not enough.
 
 Speaker notes:
-"The biggest lesson is that mobile projects fail at the boundaries: native tooling, CI config, auth handoff, external APIs, and device runtime behavior. Those parts need explicit validation, not assumptions."
+Philip: "On the product side, the important lesson was to keep the flow focused. Discover, calendar, event details, and route planning are enough for a complete first version. It was tempting to add more social features immediately, but the app first had to make the core discovery loop feel useful and understandable. Small details like drawer behavior, map interaction, empty states, and theme consistency mattered more than expected."
 
-### 10. Final State and Outlook (9:40-10:00)
+Gabriel: "On the technical side, the hardest problems were not normal screen code. They were boundaries between services and runtimes: Android, CI, Convex, Clerk, and external APIs. A feature could work in local development and still fail in an installed APK, so logs, build artifacts, and real-device checks became part of the workflow. The main lesson is that mobile projects need validation at the same runtime where users will actually run the app."
 
-- Current project: map discovery, calendar, event details, images, route planning, auth shell, CI APK builds.
-- Future work: fully re-enable cloud-synced favorites, add more location categories, improve filtering, and harden public release requirements.
+### 10. Final State And Outlook (9:30-10:00)
+
+Owner: Philip, with one closing technical sentence by Gabriel if needed
+
+- Current project: map discovery, calendar, event details, images, route planning, auth shell, favorites, CI APK builds.
+- Future product work: more location categories, stronger filtering, better personalization, and public-release polish.
+- Future technical work: harden auth/favorites for production use and improve release pipeline.
 
 Speaker notes:
-"The final result is a working end-to-end student club discovery app. The remaining work is mainly product hardening: favorites auth, richer filters, and public-release polish."
+Philip: "The final result is a working end-to-end student club discovery app. A user can find clubs on the map, browse events by date, open details, save favorites after sign-in, adjust profile settings, and plan a route. The next product steps would be a beta release, verified club content and logos, stronger location data, and more social features such as friends, in-app sharing, and interest counters."
+
+Gabriel optional closing: "The next technical step would be production hardening: release signing, official API access where needed, stronger monitoring, and more runtime testing on real devices. We would also harden the auth and favorites path for production use before a wider release."
 
 ## Recording Checklist
 
-- Show the app on Android: Discover map, bottom sheet, Calendar, Event detail, Route section, Profile.
-- Show Convex briefly: events/clubs tables or import functions.
-- Show CI briefly: APK workflow/job and artifact.
+- Philip records/screenshares:
+  - product intro,
+  - Discover map and drawer,
+  - Calendar,
+  - Event detail and route planning,
+  - Profile/settings/favorites from the user perspective.
+- Gabriel records/screenshares:
+  - Convex events/clubs tables or import functions,
+  - authentication/favorites path at a high level,
+  - tests or test command output,
+  - GitHub/GitLab APK workflow and artifact.
 - Mention the Learning Journal and AI appendix as part of submission transparency.
 - Keep demos short; the video should explain decisions, not only click through screens.
