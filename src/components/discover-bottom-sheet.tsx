@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useLanguage } from '@/providers/language-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 
 const COLLAPSED_CLUB_SUMMARY_HEIGHT = 122;
@@ -57,8 +58,8 @@ type DiscoverBottomSheetProps = {
   onSeeAllEvents: () => void;
 };
 
-function formatDateTime(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
+function formatDateTime(timestamp: number, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -106,6 +107,7 @@ export function DiscoverBottomSheet({
   onSeeAllEvents,
 }: DiscoverBottomSheetProps) {
   const { colors, resolvedTheme } = useAppTheme();
+  const { locale, t } = useLanguage();
   const { maxSheetHeight, snapPoints } = metrics;
   const dragStartY = React.useRef(snapPoints.collapsed);
   const currentTranslateY = React.useRef(snapPoints.collapsed);
@@ -124,22 +126,25 @@ export function DiscoverBottomSheet({
     if (!selectedClub) return;
 
     const eventText = nextEvent
-      ? `\nNächstes Event: ${nextEvent.title} (${formatDateTime(nextEvent.startsAt)})`
+      ? t('discover.shareNextEvent', {
+          eventTitle: nextEvent.title,
+          dateTime: formatDateTime(nextEvent.startsAt, locale),
+        })
       : '';
-    const locationText = selectedClub.addressLine ?? selectedClub.city ?? 'Dresden';
+    const locationText = selectedClub.addressLine ?? selectedClub.city ?? t('common.dresden');
     const url = selectedClub.websiteUrl ?? nextEvent?.sourceUrl;
 
     void Share.share({
       message: [
-        `${selectedClub.name} auf DDiscover`,
+        t('discover.shareTitle', { clubName: selectedClub.name }),
         locationText,
-        eventText.trim(),
+        eventText,
         url,
       ].filter(Boolean).join('\n'),
       title: selectedClub.name,
       url,
     });
-  }, [nextEvent, selectedClub]);
+  }, [locale, nextEvent, selectedClub, t]);
 
   const animateTo = React.useCallback(
     (toValue: number, nextState?: SheetSnapState) => {
@@ -269,10 +274,10 @@ export function DiscoverBottomSheet({
                 <View className="flex-row items-center gap-2">
                   <Badge variant="secondary" className="rounded-full px-2.5 py-1">
                     <Building2 size={12} color={colors.foreground} />
-                    <Text>Studentenclub</Text>
+                    <Text>{t('common.studentClub')}</Text>
                   </Badge>
                   <Text className="text-muted-foreground text-xs font-medium">
-                    {events.length} {events.length === 1 ? 'Event' : 'Events'}
+                    {events.length} {events.length === 1 ? t('common.event') : t('common.events')}
                   </Text>
                 </View>
                 <Text className="text-2xl font-bold leading-8 text-foreground" numberOfLines={1}>
@@ -281,7 +286,7 @@ export function DiscoverBottomSheet({
                 <View className="flex-row items-center gap-2">
                   <MapPin size={14} color={colors.mutedForeground} />
                   <Text className="text-muted-foreground text-sm" numberOfLines={1}>
-                    {selectedClub.addressLine ?? selectedClub.city ?? 'Dresden'}
+                    {selectedClub.addressLine ?? selectedClub.city ?? t('common.dresden')}
                   </Text>
                 </View>
               </View>
@@ -289,7 +294,7 @@ export function DiscoverBottomSheet({
               <View className="flex-row items-center gap-2">
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Studentenclub teilen"
+                  accessibilityLabel={t('discover.shareClub')}
                   android_ripple={{ color: rippleColor, borderless: true }}
                   className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
                   onPress={shareSelectedClub}>
@@ -299,7 +304,7 @@ export function DiscoverBottomSheet({
                 {selectedClub.websiteUrl ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Clubseite öffnen"
+                    accessibilityLabel={t('discover.openClubWebsite')}
                     android_ripple={{ color: rippleColor, borderless: true }}
                     className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
                     onPress={() => onOpenSource(selectedClub.websiteUrl)}>
@@ -311,8 +316,8 @@ export function DiscoverBottomSheet({
                   accessibilityRole="button"
                   accessibilityLabel={
                     clubFavorited
-                      ? 'Studentenclub aus Favoriten entfernen'
-                      : 'Studentenclub speichern'
+                      ? t('discover.removeClubFavorite')
+                      : t('discover.saveClub')
                   }
                   android_ripple={{ color: rippleColor, borderless: true }}
                   className="h-11 w-11 items-center justify-center rounded-full bg-secondary"
@@ -330,9 +335,9 @@ export function DiscoverBottomSheet({
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center gap-2">
                   <Badge className="rounded-full px-2.5 py-1">
-                    <Text>Event</Text>
+                    <Text>{t('common.event')}</Text>
                   </Badge>
-                  <Text className="text-sm font-semibold text-foreground">Nächstes Event</Text>
+                  <Text className="text-sm font-semibold text-foreground">{t('discover.nextEvent')}</Text>
                 </View>
                 <GripHorizontal size={16} color={colors.mutedForeground} />
               </View>
@@ -348,13 +353,13 @@ export function DiscoverBottomSheet({
                   <View className="flex-row items-center gap-2">
                     <CalendarClock size={14} color={colors.mutedForeground} />
                     <Text className="text-muted-foreground text-sm">
-                      {formatDateTime(nextEvent.startsAt)}
+                      {formatDateTime(nextEvent.startsAt, locale)}
                     </Text>
                   </View>
                 </Pressable>
               ) : (
                 <Text className="text-muted-foreground text-sm">
-                  Keine bevorstehenden Events für diesen Studentenclub.
+                  {t('discover.noUpcomingEvents')}
                 </Text>
               )}
             </View>
@@ -373,7 +378,7 @@ export function DiscoverBottomSheet({
                       color={isEventFavorited(nextEvent._id) ? colors.primaryForeground : colors.foreground}
                       fill={isEventFavorited(nextEvent._id) ? colors.primaryForeground : 'transparent'}
                     />
-                    <Text>{isEventFavorited(nextEvent._id) ? 'Event gespeichert' : 'Event speichern'}</Text>
+                    <Text>{isEventFavorited(nextEvent._id) ? t('discover.eventSaved') : t('discover.saveEvent')}</Text>
                   </Button>
 
                   <Button
@@ -383,7 +388,7 @@ export function DiscoverBottomSheet({
                     className="rounded-full"
                     onPress={() => onOpenEvent(nextEvent._id)}>
                     <CalendarClock size={14} color={colors.foreground} />
-                    <Text>Details</Text>
+                    <Text>{t('common.details')}</Text>
                   </Button>
 
                   {nextEvent.sourceUrl ? (
@@ -394,7 +399,7 @@ export function DiscoverBottomSheet({
                       className="rounded-full"
                       onPress={() => onOpenSource(nextEvent.sourceUrl)}>
                       <ExternalLink size={14} color={colors.foreground} />
-                      <Text>Quelle</Text>
+                      <Text>{t('common.source')}</Text>
                     </Button>
                   ) : null}
                 </>
@@ -404,7 +409,7 @@ export function DiscoverBottomSheet({
 
             <View className="gap-2 pt-2">
               <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-semibold text-foreground">Weitere Events</Text>
+                <Text className="text-lg font-semibold text-foreground">{t('discover.moreEvents')}</Text>
                 <Text className="text-muted-foreground text-sm">{additionalEvents.length}</Text>
               </View>
 
@@ -431,10 +436,10 @@ export function DiscoverBottomSheet({
                       <View className="min-w-0 flex-1 gap-1">
                         <View className="flex-row items-center gap-2">
                           <Badge variant="outline" className="px-2 py-0.5">
-                            <Text>Event</Text>
+                            <Text>{t('common.event')}</Text>
                           </Badge>
                           <Text className="text-muted-foreground text-xs">
-                            {formatDateTime(event.startsAt)}
+                            {formatDateTime(event.startsAt, locale)}
                           </Text>
                         </View>
                         <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
@@ -464,7 +469,7 @@ export function DiscoverBottomSheet({
                 hiddenEventCount === 0 ? (
                   <View className="rounded-[16px] border border-border bg-background px-3 py-5">
                     <Text className="text-muted-foreground text-sm">
-                      Keine weiteren importierten Events.
+                      {t('discover.noMoreEvents')}
                     </Text>
                   </View>
                 ) : null
@@ -478,7 +483,7 @@ export function DiscoverBottomSheet({
                   className="rounded-full"
                   onPress={onSeeAllEvents}>
                   <CalendarClock size={14} color="#ffffff" />
-                  <Text>Alle Events ansehen ({hiddenEventCount} mehr)</Text>
+                  <Text>{t('discover.seeAllEvents', { count: hiddenEventCount })}</Text>
                 </Button>
               ) : null}
             </View>
@@ -486,12 +491,12 @@ export function DiscoverBottomSheet({
       ) : (
         <View className="gap-2 px-5 pb-8">
           <Text className="text-lg font-semibold text-foreground">
-            {isLoading ? 'Studentenclubs werden geladen...' : 'Keine Studentenclubs verfügbar'}
+            {isLoading ? t('discover.clubsLoading') : t('discover.noClubs')}
           </Text>
           <Text className="text-muted-foreground text-sm">
             {errorMessage
-              ? `Convex konnte nicht geladen werden: ${errorMessage}`
-              : 'Aktuell zeigen wir Studentenclubs. Weitere Ort-Kategorien folgen.'}
+              ? t('errors.convexLoadPrefix', { message: errorMessage })
+              : t('discover.currentCategoryNote')}
           </Text>
         </View>
       )}

@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ClerkAuthProvider } from '@/providers/clerk-provider';
 import { ConvexClientProvider } from '@/providers/convex-provider';
 import { FavoriteSignInProvider } from '@/providers/favorite-sign-in-provider';
+import { LanguageProvider } from '@/providers/language-provider';
 import { AppThemeProvider, useAppTheme } from '@/providers/theme-provider';
 
 function RootLayoutContent() {
@@ -32,9 +33,11 @@ export default function TabLayout() {
     <ClerkAuthProvider>
       <ConvexClientProvider>
         <AppThemeProvider>
-          <FavoriteSignInProvider>
-            <RootLayoutContent />
-          </FavoriteSignInProvider>
+          <LanguageProvider>
+            <FavoriteSignInProvider>
+              <RootLayoutContent />
+            </FavoriteSignInProvider>
+          </LanguageProvider>
         </AppThemeProvider>
       </ConvexClientProvider>
     </ClerkAuthProvider>

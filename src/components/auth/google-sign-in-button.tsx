@@ -8,9 +8,11 @@ import { ActivityIndicator, Platform, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/providers/language-provider';
 
 export function GoogleSignInButton() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const { startSSOFlow } = useSSO();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -44,12 +46,12 @@ export function GoogleSignInButton() {
 
     try {
       if (!webClientId) {
-        setErrorMessage('Missing EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID in .env.local.');
+        setErrorMessage(t('auth.missingWebClientId'));
         return;
       }
 
       if (Platform.OS === 'android' && !androidClientId) {
-        setErrorMessage('Missing EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID in .env.local.');
+        setErrorMessage(t('auth.missingAndroidClientId'));
         return;
       }
 
@@ -63,10 +65,10 @@ export function GoogleSignInButton() {
         redirectUrl: AuthSession.makeRedirectUri({ path: 'sso-callback' }),
       });
       if (!(await activateSession(oauthResult))) {
-        setErrorMessage('Google sign-in did not create a Clerk session.');
+        setErrorMessage(t('auth.googleIncomplete'));
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Google sign-in failed.');
+      setErrorMessage(error instanceof Error ? error.message : t('auth.googleFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +88,7 @@ export function GoogleSignInButton() {
             <Text className="text-[11px] font-semibold">G</Text>
           </View>
         )}
-        <Text>Mit Google fortfahren</Text>
+        <Text>{t('auth.googleContinue')}</Text>
       </Button>
 
       {errorMessage ? <Text className="text-destructive text-xs">{errorMessage}</Text> : null}

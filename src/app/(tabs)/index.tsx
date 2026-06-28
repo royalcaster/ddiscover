@@ -12,6 +12,7 @@ import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { resolveClubCoordinates, DRESDEN_CENTER } from '@/lib/club-locations';
 import type { MapRegion } from '@/lib/map-types';
 import { openCalendar, openEventDetail } from '@/lib/navigation';
+import { useLanguage } from '@/providers/language-provider';
 
 type MarkerItem = {
   id: string;
@@ -39,6 +40,7 @@ function toLocalDayKey(timestamp: number) {
 
 export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const { height } = useWindowDimensions();
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
@@ -128,13 +130,13 @@ export default function DiscoverScreen() {
     [events, openTodayOnly, selectedClub, todayKey],
   );
 
-  const centerOnUserLocation = async () => {
+  const centerOnUserLocation = React.useCallback(async () => {
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== Location.PermissionStatus.GRANTED) {
         Alert.alert(
-          'Standort nicht freigegeben',
-          'Erlaube den Standortzugriff, um die Karte auf deine Position zu zentrieren.',
+          t('discover.locationPermissionTitle'),
+          t('discover.locationPermissionMessage'),
         );
         return;
       }
@@ -150,14 +152,23 @@ export default function DiscoverScreen() {
       setCameraTarget(coordinates);
     } catch (error) {
       console.warn('Failed to get current location', error);
-      Alert.alert('Standort nicht verfügbar', 'Dein Standort konnte gerade nicht geladen werden.');
+      Alert.alert(t('discover.locationUnavailableTitle'), t('discover.locationUnavailableMessage'));
     }
-  };
+  }, [t]);
 
-  const openSource = (url?: string) => {
+  const openSource = React.useCallback((url?: string) => {
     if (!url) return;
     void Linking.openURL(url);
-  };
+  }, []);
+
+  const selectMarker = React.useCallback((markerId: string) => {
+    setCameraTarget(null);
+    setSelectedMarkerId(markerId);
+  }, []);
+
+  const toggleOpenToday = React.useCallback(() => {
+    setOpenTodayOnly((value) => !value);
+  }, []);
 
   return (
     <View className="flex-1 bg-background">
@@ -171,14 +182,9 @@ export default function DiscoverScreen() {
         sheetMaxHeight={sheetMetrics.maxSheetHeight}
         sheetTranslateY={sheetTranslateY}
         onRegionChangeComplete={handleRegionChangeComplete}
-        onSelectMarker={(markerId) => {
-          setCameraTarget(null);
-          setSelectedMarkerId(markerId);
-        }}
-        onCenterUserLocation={() => {
-          void centerOnUserLocation();
-        }}
-        onToggleOpenToday={() => setOpenTodayOnly((value) => !value)}
+        onSelectMarker={selectMarker}
+        onCenterUserLocation={centerOnUserLocation}
+        onToggleOpenToday={toggleOpenToday}
       />
 
       <DiscoverBottomSheet

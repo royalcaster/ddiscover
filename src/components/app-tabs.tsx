@@ -6,12 +6,13 @@ import { StyleSheet, TouchableNativeFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
+import { useLanguage } from '@/providers/language-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 
 const VISIBLE_TABS = [
-  { name: 'index', label: 'Entdecken', Icon: Compass },
-  { name: 'calendar', label: 'Kalender', Icon: CalendarDays },
-  { name: 'profile', label: 'Profil', Icon: UserRound },
+  { name: 'index', labelKey: 'tabs.discover', Icon: Compass },
+  { name: 'calendar', labelKey: 'tabs.calendar', Icon: CalendarDays },
+  { name: 'profile', labelKey: 'tabs.profile', Icon: UserRound },
 ] as const;
 
 const TAB_COLORS = {
@@ -35,6 +36,7 @@ const TAB_COLORS = {
 
 function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { resolvedTheme } = useAppTheme();
+  const { t } = useLanguage();
   const tabColors = TAB_COLORS[resolvedTheme];
   const insets = useSafeAreaInsets();
 
@@ -48,10 +50,11 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           paddingBottom: Math.max(insets.bottom, 10),
         },
       ]}>
-      {VISIBLE_TABS.map(({ name, label, Icon }) => {
+      {VISIBLE_TABS.map(({ name, labelKey, Icon }) => {
         const route = state.routes.find((entry) => entry.name === name);
         if (!route) return null;
 
+        const label = t(labelKey);
         const focused = state.routes[state.index]?.key === route.key;
         const descriptor = descriptors[route.key];
         const iconColor = focused ? tabColors.foreground : tabColors.muted;
@@ -112,6 +115,7 @@ function AppTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function AppTabs() {
   const { resolvedTheme } = useAppTheme();
+  const { t } = useLanguage();
   const tabColors = TAB_COLORS[resolvedTheme];
 
   return (
@@ -124,9 +128,9 @@ export default function AppTabs() {
         sceneStyle: { backgroundColor: tabColors.background },
       }}
       tabBar={(props) => <AppTabBar {...props} />}>
-      <Tabs.Screen name="index" options={{ title: 'Entdecken' }} />
-      <Tabs.Screen name="calendar" options={{ title: 'Kalender' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
+      <Tabs.Screen name="index" options={{ title: t('tabs.discover') }} />
+      <Tabs.Screen name="calendar" options={{ title: t('tabs.calendar') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
       <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen name="favorites" options={{ href: null }} />
       <Tabs.Screen name="route" options={{ href: null }} />

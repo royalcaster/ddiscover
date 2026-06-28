@@ -6,6 +6,8 @@ import { Alert } from 'react-native';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { publicConvexUrl } from '@/lib/public-config';
+import { DEFAULT_LANGUAGE, translate } from '@/i18n';
+import { useLanguage } from '@/providers/language-provider';
 import { useFavoriteSignInPrompt } from '@/providers/favorite-sign-in-provider';
 
 type FavoriteEntityType = 'club' | 'event';
@@ -34,7 +36,7 @@ function createEmptyFavoriteIds(): FavoriteIds {
 
 function createAuthenticatedConvexClient(token: string) {
   if (!publicConvexUrl) {
-    throw new Error('EXPO_PUBLIC_CONVEX_URL is not configured.');
+    throw new Error(translate(DEFAULT_LANGUAGE, 'errors.publicConvexUrlMissing'));
   }
 
   return new ConvexHttpClient(publicConvexUrl, { auth: token, logger: false });
@@ -47,6 +49,7 @@ function createAuthenticatedConvexClient(token: string) {
  */
 export function useFavorites() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { language, t } = useLanguage();
   const { showSignInPrompt } = useFavoriteSignInPrompt();
   const getTokenRef = React.useRef(getToken);
   const [favoriteIds, setFavoriteIds] = React.useState<FavoriteIds>(() => createEmptyFavoriteIds());
@@ -63,11 +66,11 @@ export function useFavorites() {
     async (skipCache = false) => {
       const token = await getTokenRef.current({ template: 'convex', skipCache });
       if (!token) {
-        throw new Error('Clerk did not return a Convex JWT.');
+        throw new Error(translate(language, 'errors.favoritesTokenMissing'));
       }
       return token;
     },
-    [],
+    [language],
   );
 
   const refresh = React.useCallback(async () => {
@@ -110,12 +113,12 @@ export function useFavorites() {
       console.warn('[Favorites] Could not load favorites', error);
       setFavoriteIds(createEmptyFavoriteIds());
       setHasLoaded(true);
-      setAuthError(error instanceof Error ? error : new Error('Could not load favorites.'));
+      setAuthError(error instanceof Error ? error : new Error(t('errors.favoritesLoad')));
     } finally {
       if (requestId !== requestIdRef.current) return;
       setIsLoading(false);
     }
-  }, [getConvexToken, isLoaded, isSignedIn]);
+  }, [getConvexToken, isLoaded, isSignedIn, t]);
 
   React.useEffect(() => {
     void refresh();
@@ -164,14 +167,14 @@ export function useFavorites() {
       return result;
     } catch (error) {
       console.error('[Favorites] Could not toggle favorite', error);
-      setAuthError(error instanceof Error ? error : new Error('Could not save favorite.'));
+      setAuthError(error instanceof Error ? error : new Error(t('errors.favoritesSave')));
       Alert.alert(
-        'Speichern fehlgeschlagen',
-        'Der Favorit konnte gerade nicht gespeichert werden. Bitte versuche es gleich noch einmal.',
+        t('favoritesActions.saveFailedTitle'),
+        t('favoritesActions.saveFailedMessage'),
       );
       return null;
     }
-  }, [getConvexToken, isSignedIn, showSignInPrompt]);
+  }, [getConvexToken, isSignedIn, showSignInPrompt, t]);
 
   return {
     isSignedIn: Boolean(isSignedIn),

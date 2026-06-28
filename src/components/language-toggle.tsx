@@ -1,27 +1,21 @@
-import { MonitorSmartphone, MoonStar, SunMedium } from 'lucide-react-native';
+import { Languages } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { LANGUAGE_OPTIONS } from '@/i18n';
 import { useLanguage } from '@/providers/language-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 
-const options = [
-  { value: 'system', icon: MonitorSmartphone, labelKey: 'theme.auto' },
-  { value: 'light', icon: SunMedium, labelKey: 'theme.light' },
-  { value: 'dark', icon: MoonStar, labelKey: 'theme.dark' },
-] as const;
-
-export function ThemeModeToggle() {
-  const { colors, preference, setPreference } = useAppTheme();
-  const { t } = useLanguage();
+export function LanguageToggle() {
+  const { colors } = useAppTheme();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <View className="flex-row rounded-lg border border-border bg-card p-1">
-      {options.map((option) => {
-        const Icon = option.icon;
-        const isActive = preference === option.value;
+      {LANGUAGE_OPTIONS.map((option) => {
+        const isActive = language === option.value;
 
         return (
           <Button
@@ -30,10 +24,10 @@ export function ThemeModeToggle() {
             variant={isActive ? 'default' : 'ghost'}
             className="flex-1 border-transparent"
             onPress={() => {
-              void setPreference(option.value);
+              void setLanguage(option.value);
             }}>
             <View className="flex-row items-center justify-center gap-2">
-              <Icon
+              <Languages
                 size={15}
                 color={isActive ? colors.primaryForeground : colors.mutedForeground}
                 strokeWidth={2}

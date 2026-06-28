@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import type { MapRegion } from '@/lib/map-types';
+import { useLanguage } from '@/providers/language-provider';
 
 type DiscoverMarker = {
   id: string;
@@ -36,13 +37,15 @@ export function DiscoverMap({
   onCenterUserLocation,
   onToggleOpenToday,
 }: DiscoverMapProps) {
+  const { t } = useLanguage();
+
   return (
     <View className="h-[360px] overflow-hidden rounded-[14px] border border-border bg-secondary px-4 py-4">
       <View className="flex-row items-start justify-between gap-3">
         <View>
-          <Text className="text-sm font-semibold">Kartenansicht (Web-Fallback)</Text>
+          <Text className="text-sm font-semibold">{t('discover.webMapTitle')}</Text>
           <Text className="text-muted-foreground mt-1 text-xs">
-            Interaktive Marker sind in der nativen App verfügbar.
+            {t('discover.webMapDescription')}
           </Text>
         </View>
         <View className="flex-row gap-2">
@@ -55,7 +58,7 @@ export function DiscoverMap({
             className={openTodayOnly ? 'h-10 flex-row items-center justify-center gap-2 rounded-full bg-primary px-3' : 'h-10 flex-row items-center justify-center gap-2 rounded-full bg-white px-3'}
             onPress={onToggleOpenToday}>
             <CalendarCheck2 size={18} color="#111111" strokeWidth={2.4} />
-            <Text className="text-xs font-bold text-[#111111]">Heute offen</Text>
+            <Text className="text-xs font-bold text-[#111111]">{t('discover.openToday')}</Text>
           </Pressable>
         </View>
       </View>
@@ -64,7 +67,7 @@ export function DiscoverMap({
           <View className="h-8 w-8 items-center justify-center rounded-full border-2 border-foreground bg-primary">
             <UserRound size={14} color="#111111" strokeWidth={2.5} />
           </View>
-          <Text className="text-sm font-medium">Eigener Standort gesetzt</Text>
+          <Text className="text-sm font-medium">{t('discover.userLocationSet')}</Text>
         </View>
       ) : null}
       <View className="mt-4 gap-2">

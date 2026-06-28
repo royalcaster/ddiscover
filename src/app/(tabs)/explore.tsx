@@ -10,13 +10,14 @@ import { Text } from '@/components/ui/text';
 import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { openEventDetail } from '@/lib/navigation';
+import { useLanguage } from '@/providers/language-provider';
 
-function formatStartsAt(timestamp?: number) {
+function formatStartsAt(timestamp: number | undefined, locale: string, fallback: string) {
   if (!timestamp) {
-    return 'No upcoming event';
+    return fallback;
   }
 
-  return new Intl.DateTimeFormat('de-DE', {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -31,6 +32,7 @@ function formatAddress(addressLine?: string, postalCode?: string, city?: string)
 
 export default function ClubsScreen() {
   const theme = useTheme();
+  const { locale, t } = useLanguage();
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 24 });
   const clubs = clubsQuery.data;
 
@@ -44,14 +46,13 @@ export default function ClubsScreen() {
         <View className="gap-4">
           <View className="max-w-[620px] gap-3">
             <Badge variant="default">
-              <Text>Student clubs</Text>
+              <Text>{t('common.studentClubs')}</Text>
             </Badge>
             <Text variant="h1" className="text-left">
-              Canonical student club profiles with event context
+              {t('explore.heroTitle')}
             </Text>
             <Text variant="muted">
-              This is the first normalized discovery layer on top of the VDSC import. Each student club card
-              is backed by the canonical Convex model rather than raw feed strings.
+              {t('explore.heroDescription')}
             </Text>
           </View>
 
@@ -59,7 +60,7 @@ export default function ClubsScreen() {
             <Card className="min-w-[170px] flex-1">
               <CardHeader className="gap-1 pb-2">
                 <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                  Student clubs loaded
+                  {t('explore.loadedStat')}
                 </Text>
                 <Text className="text-4xl font-semibold">{clubs?.length ?? '...'}</Text>
               </CardHeader>
@@ -67,7 +68,7 @@ export default function ClubsScreen() {
             <Card className="min-w-[170px] flex-1">
               <CardHeader className="gap-1 pb-2">
                 <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                  With next event
+                  {t('explore.withNextEventStat')}
                 </Text>
                 <Text className="text-4xl font-semibold">{clubsWithUpcomingEvent}</Text>
               </CardHeader>
@@ -78,14 +79,14 @@ export default function ClubsScreen() {
         {clubsQuery.isLoading ? (
           <Card>
             <CardContent className="pt-4">
-              <Text variant="h4">Loading student clubs</Text>
-              <Text variant="muted">Waiting for Convex to return the normalized student club list.</Text>
+              <Text variant="h4">{t('explore.loadingTitle')}</Text>
+              <Text variant="muted">{t('explore.loadingDescription')}</Text>
             </CardContent>
           </Card>
         ) : clubsQuery.error ? (
           <Card>
             <CardContent className="pt-4">
-              <Text variant="h4">Convex request failed</Text>
+              <Text variant="h4">{t('explore.requestFailed')}</Text>
               <Text variant="muted">{clubsQuery.error.message}</Text>
             </CardContent>
           </Card>
@@ -100,7 +101,7 @@ export default function ClubsScreen() {
                     <View className="flex-1 gap-3">
                       <View className="flex-row flex-wrap items-center gap-2">
                         <Badge variant="default">
-                          <Text>{club.source?.toUpperCase() ?? 'MANUAL'}</Text>
+                          <Text>{club.source?.toUpperCase() ?? t('explore.manual')}</Text>
                         </Badge>
                         <Badge variant="outline">
                           <Text>{club.slug}</Text>
@@ -111,7 +112,7 @@ export default function ClubsScreen() {
 
                     <View className="rounded-lg border border-border bg-secondary px-3 py-2">
                       <Text className="font-mono text-xs font-semibold uppercase tracking-[0.12em]">
-                        {club.nextEvent ? formatStartsAt(club.nextEvent.startsAt) : 'NO NEXT EVENT'}
+                        {club.nextEvent ? formatStartsAt(club.nextEvent.startsAt, locale, t('explore.noNextEventShort')) : t('explore.noNextEventShort')}
                       </Text>
                     </View>
                   </View>
@@ -122,7 +123,7 @@ export default function ClubsScreen() {
                     <View className="flex-row items-start gap-2">
                       <Building2 size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
                       <Text variant="muted">
-                        {club.websiteUrl ? 'Student club profile normalized from source metadata.' : 'Canonical student club profile with normalized venue metadata.'}
+                        {club.websiteUrl ? t('explore.sourceProfile') : t('explore.canonicalProfile')}
                       </Text>
                     </View>
 
@@ -140,7 +141,7 @@ export default function ClubsScreen() {
                         <View className="flex-row items-center gap-2">
                           <CalendarClock size={16} color={theme.mutedForeground} />
                           <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.12em]">
-                            Next event
+                            {t('explore.nextEvent')}
                           </Text>
                         </View>
                         <Text variant="large">{club.nextEvent.title}</Text>
@@ -151,12 +152,12 @@ export default function ClubsScreen() {
                               {club.nextEvent.locationName ?? club.name}
                             </Text>
                           </View>
-                          <Text variant="muted">{formatStartsAt(club.nextEvent.startsAt)}</Text>
+                          <Text variant="muted">{formatStartsAt(club.nextEvent.startsAt, locale, t('explore.noNextEventShort'))}</Text>
                         </View>
                       </Pressable>
                     ) : (
                       <View className="rounded-lg border border-border bg-secondary p-3">
-                        <Text variant="muted">No upcoming event is currently linked to this student club.</Text>
+                        <Text variant="muted">{t('explore.noLinkedEvent')}</Text>
                       </View>
                     )}
                   </View>
@@ -171,7 +172,7 @@ export default function ClubsScreen() {
                         void Linking.openURL(club.websiteUrl!);
                       }}>
                       <Globe2 size={16} color={theme.foreground} />
-                      <Text>Website</Text>
+                      <Text>{t('explore.website')}</Text>
                     </Button>
                   ) : null}
                   {club.nextEvent?.sourceUrl ? (
@@ -182,7 +183,7 @@ export default function ClubsScreen() {
                         openEventDetail(club.nextEvent!._id);
                       }}>
                       <CalendarClock size={16} color={theme.foreground} />
-                      <Text>Event details</Text>
+                      <Text>{t('explore.eventDetails')}</Text>
                     </Button>
                   ) : null}
                 </CardFooter>

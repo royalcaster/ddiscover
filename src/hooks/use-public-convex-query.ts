@@ -8,6 +8,7 @@ import { getFunctionName, makeFunctionReference } from 'convex/server';
 import React from 'react';
 
 import { publicConvexUrl } from '@/lib/public-config';
+import { useLanguage } from '@/providers/language-provider';
 
 const publicConvexClient = publicConvexUrl
   ? new ConvexHttpClient(publicConvexUrl, { logger: false })
@@ -23,13 +24,13 @@ function getPublicConvexHost() {
   }
 }
 
-function describeConvexError(error: unknown) {
+function describeConvexError(error: unknown, fallbackMessage: string) {
   if (error instanceof Error) {
     const message = error.message.trim();
     const name = error.name.trim();
     return [name === 'Error' ? null : name, message || null]
       .filter(Boolean)
-      .join(': ') || 'Unknown Convex query error.';
+      .join(': ') || fallbackMessage;
   }
 
   if (typeof error === 'string' && error.trim().length > 0) {
@@ -45,7 +46,7 @@ function describeConvexError(error: unknown) {
     // Fall through to the generic message.
   }
 
-  return 'Unknown Convex query error.';
+  return fallbackMessage;
 }
 
 function inspectConvexError(error: unknown) {
@@ -73,6 +74,7 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
   query: Query,
   args: FunctionArgs<Query> | null,
 ) {
+  const { t } = useLanguage();
   const [data, setData] = React.useState<FunctionReturnType<Query> | undefined>(undefined);
   const [error, setError] = React.useState<Error | null>(null);
   const [isLoading, setIsLoading] = React.useState(Boolean(publicConvexClient));
@@ -98,7 +100,7 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
 
     if (!publicConvexClient) {
       setData(undefined);
-      setError(new Error('EXPO_PUBLIC_CONVEX_URL is not configured.'));
+      setError(new Error(t('errors.publicConvexUrlMissing')));
       setIsLoading(false);
       return;
     }
@@ -119,7 +121,7 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
       setData(result);
     } catch (queryError) {
       if (requestId !== requestIdRef.current) return;
-      const errorMessage = describeConvexError(queryError);
+      const errorMessage = describeConvexError(queryError, t('errors.unknownConvexQuery'));
       console.error('[Convex public query] failed', {
         queryName,
         convexHost: getPublicConvexHost(),
@@ -132,7 +134,7 @@ export function usePublicConvexQuery<Query extends FunctionReference<'query'>>(
       if (requestId !== requestIdRef.current) return;
       setIsLoading(false);
     }
-  }, [queryName, stableQuery]);
+  }, [queryName, stableQuery, t]);
 
   React.useEffect(() => {
     void argsKey;

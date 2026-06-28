@@ -7,37 +7,45 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { previewRoute } from '@/lib/discovery';
+import { useLanguage } from '@/providers/language-provider';
+
+const translatedStopDetails = ['route.walkThreeMinutes', null, 'route.walkTwoMinutes', null] as const;
 
 export default function RouteScreen() {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   return (
-    <ScreenShell title="Route">
+    <ScreenShell title={t('route.title')}>
       <View className="gap-3">
         <Card className="rounded-[22px] py-0">
           <CardHeader className="px-4 pt-4">
-            <CardTitle className="text-[18px]">Louisenstraße → Pulse</CardTitle>
+            <CardTitle className="text-[18px]">{t('route.previewTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="gap-4 px-4 pb-4">
             <View className="rounded-[18px] bg-secondary p-4">
               <View className="flex-row items-center justify-between">
                 <Text className="text-lg font-semibold">22:15 - 22:38</Text>
-                <Text className="text-muted-foreground">23 Min.</Text>
+                <Text className="text-muted-foreground">{t('route.duration')}</Text>
               </View>
               <View className="mt-3 flex-row items-center gap-3">
                 <Navigation size={16} color={theme.foreground} />
                 <TramFront size={16} color={theme.foreground} />
-                <Text className="text-sm">Zu Fuß • Tram 7 • Zu Fuß</Text>
+                <Text className="text-sm">{t('route.summary')}</Text>
               </View>
             </View>
 
-            {previewRoute.map((stop) => (
+            {previewRoute.map((stop, index) => (
               <View key={`${stop.time}-${stop.title}`} className="flex-row gap-4">
                 <Text className="text-muted-foreground w-14 text-sm">{stop.time}</Text>
                 <View className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
                 <View className="flex-1 gap-0.5">
                   <Text className="text-sm font-medium">{stop.title}</Text>
-                  <Text className="text-muted-foreground text-sm">{stop.detail}</Text>
+                  <Text className="text-muted-foreground text-sm">
+                    {translatedStopDetails[index]
+                      ? t(translatedStopDetails[index])
+                      : stop.detail}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -46,7 +54,7 @@ export default function RouteScreen() {
 
         <Button variant="default" className="rounded-full">
           <Navigation size={16} color={theme.primaryForeground} />
-          <Text className="text-primary-foreground">Route starten</Text>
+          <Text className="text-primary-foreground">{t('route.startRoute')}</Text>
         </Button>
       </View>
     </ScreenShell>

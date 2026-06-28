@@ -16,21 +16,24 @@ import { Text } from './ui/text';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/providers/language-provider';
 
 export default function AppTabs() {
+  const { t } = useLanguage();
+
   return (
     <Tabs>
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="discover" href={'/' as Href} asChild>
-            <TabButton>Entdecken</TabButton>
+            <TabButton>{t('tabs.discover')}</TabButton>
           </TabTrigger>
           <TabTrigger name="calendar" href={'/calendar' as Href} asChild>
-            <TabButton>Kalender</TabButton>
+            <TabButton>{t('tabs.calendar')}</TabButton>
           </TabTrigger>
           <TabTrigger name="profile" href={'/profile' as Href} asChild>
-            <TabButton>Profil</TabButton>
+            <TabButton>{t('tabs.profile')}</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>

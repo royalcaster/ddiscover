@@ -5,6 +5,7 @@ import { Animated, Modal, Pressable, StyleSheet, TouchableNativeFeedback, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
+import { useLanguage } from '@/providers/language-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 
 type FavoriteSignInContextValue = {
@@ -41,6 +42,7 @@ const MODAL_COLORS = {
 export function FavoriteSignInProvider({ children }: PropsWithChildren) {
   const router = useRouter();
   const { resolvedTheme } = useAppTheme();
+  const { t } = useLanguage();
   const modalColors = MODAL_COLORS[resolvedTheme];
   const insets = useSafeAreaInsets();
   const [visible, setVisible] = React.useState(false);
@@ -120,7 +122,7 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
               <View style={styles.closeClip}>
                 <TouchableNativeFeedback
                   accessibilityRole="button"
-                  accessibilityLabel="Dialog schließen"
+                  accessibilityLabel={t('common.closeDialog')}
                   background={TouchableNativeFeedback.Ripple(modalColors.ripple, true)}
                   onPress={hide}
                   useForeground>
@@ -133,10 +135,10 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
 
             <View style={styles.dialogCopy}>
               <Text style={{ color: modalColors.foreground }} className="text-xl font-bold">
-                Anmeldung erforderlich
+                {t('favoritePrompt.title')}
               </Text>
               <Text style={{ color: modalColors.muted }} className="text-sm leading-5">
-                Melde dich mit deinem Google Konto an, um Clubs und Events in deinen Favoriten zu speichern.
+                {t('favoritePrompt.description')}
               </Text>
             </View>
 
@@ -156,7 +158,7 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
                   useForeground>
                   <View style={styles.actionContent}>
                     <Text style={{ color: modalColors.foreground }} className="text-sm font-semibold">
-                      Abbrechen
+                      {t('common.cancel')}
                     </Text>
                   </View>
                 </TouchableNativeFeedback>
@@ -170,7 +172,7 @@ export function FavoriteSignInProvider({ children }: PropsWithChildren) {
                   useForeground>
                   <View style={styles.actionContent}>
                     <Text style={{ color: modalColors.primaryForeground }} className="text-sm font-bold">
-                      Zum Profil
+                      {t('favoritePrompt.signIn')}
                     </Text>
                   </View>
                 </TouchableNativeFeedback>

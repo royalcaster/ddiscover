@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/text';
 import { useFavorites } from '@/hooks/use-favorites';
 import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/providers/language-provider';
 
 const EVENT_HERO = require('../../../assets/images/logo-glow.png');
 
@@ -27,8 +28,8 @@ function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function formatEventDate(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
+function formatEventDate(timestamp: number, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
@@ -36,16 +37,16 @@ function formatEventDate(timestamp: number) {
   }).format(new Date(timestamp));
 }
 
-function formatEventTime(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
+function formatEventTime(timestamp: number, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(timestamp));
 }
 
-function formatShortDateTime(timestamp: number | null) {
-  if (!timestamp) return '--:--';
-  return new Intl.DateTimeFormat('de-DE', {
+function formatShortDateTime(timestamp: number | null, locale: string, fallback: string) {
+  if (!timestamp) return fallback;
+  return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(timestamp));
@@ -67,14 +68,14 @@ function EventHeroFallback() {
   );
 }
 
-function inferGenre(title: string) {
+function inferGenre(title: string, translate: ReturnType<typeof useLanguage>['t']) {
   const normalized = title.toLowerCase();
-  if (normalized.includes('techno')) return 'Techno';
-  if (normalized.includes('bass')) return 'Drum & Bass';
-  if (normalized.includes('house')) return 'House';
-  if (normalized.includes('karaoke')) return 'Karaoke';
-  if (normalized.includes('quiz')) return 'Quiz';
-  return 'Studentenclub Event';
+  if (normalized.includes('techno')) return translate('genres.techno');
+  if (normalized.includes('bass')) return translate('genres.bass');
+  if (normalized.includes('house')) return translate('genres.house');
+  if (normalized.includes('karaoke')) return translate('genres.karaoke');
+  if (normalized.includes('quiz')) return translate('genres.quiz');
+  return translate('genres.studentClubEvent');
 }
 
 type DvbRouteResult =
@@ -142,6 +143,7 @@ function DvbRoutePlanner({
   arrivalAt,
 }: DvbRoutePlannerProps) {
   const theme = useTheme();
+  const { locale, t } = useLanguage();
   const planRoute = useAction(api.dvb.planRoute);
   const [originQuery, setOriginQuery] = React.useState('Hauptbahnhof');
   const [routeResult, setRouteResult] = React.useState<DvbRouteResult | null>(null);
@@ -165,26 +167,26 @@ function DvbRoutePlanner({
       console.warn('Failed to load DVB route', error);
       setRouteResult({
         status: 'error',
-        message: 'DVB-Verbindung konnte gerade nicht geladen werden.',
+        message: t('eventDetail.dvb.error'),
       });
     } finally {
       setIsLoading(false);
     }
-  }, [arrivalAt, destinationAddress, destinationName, latitude, longitude, originQuery, planRoute]);
+  }, [arrivalAt, destinationAddress, destinationName, latitude, longitude, originQuery, planRoute, t]);
 
   return (
     <View className="gap-4 rounded-[14px] border border-border bg-card px-4 py-4">
       <View className="flex-row items-center gap-2">
         <Navigation size={18} color={theme.foreground} />
-        <Text className="text-base font-semibold">DVB Anreise</Text>
+        <Text className="text-base font-semibold">{t('eventDetail.dvb.title')}</Text>
       </View>
 
       <View className="gap-2">
-        <Text className="text-muted-foreground text-xs font-semibold uppercase">Start</Text>
+        <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('eventDetail.dvb.start')}</Text>
         <TextInput
           value={originQuery}
           onChangeText={setOriginQuery}
-          placeholder="Start-Haltestelle"
+          placeholder={t('eventDetail.dvb.startPlaceholder')}
           placeholderTextColor={theme.mutedForeground}
           autoCapitalize="words"
           className="rounded-[12px] border border-border bg-secondary px-3 py-3 text-foreground"
@@ -192,8 +194,8 @@ function DvbRoutePlanner({
       </View>
 
       <View className="gap-1">
-        <Text className="text-muted-foreground text-xs font-semibold uppercase">Ziel</Text>
-        <Text className="text-sm font-semibold">{destinationName || destinationAddress || 'Veranstaltungsort'}</Text>
+        <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('eventDetail.dvb.destination')}</Text>
+        <Text className="text-sm font-semibold">{destinationName || destinationAddress || t('eventDetail.dvb.destinationFallback')}</Text>
       </View>
 
       <Button
@@ -203,11 +205,11 @@ function DvbRoutePlanner({
         disabled={!canPlanRoute || isLoading}
         onPress={() => void loadRoute()}>
         <Route size={16} color={theme.foreground} />
-        <Text>{isLoading ? 'Route wird geladen...' : 'Route berechnen'}</Text>
+        <Text>{isLoading ? t('eventDetail.dvb.loadingRoute') : t('eventDetail.dvb.loadRoute')}</Text>
       </Button>
 
       {!canPlanRoute ? (
-        <Text className="text-muted-foreground text-sm">Für dieses Event fehlen noch Adressdaten.</Text>
+        <Text className="text-muted-foreground text-sm">{t('eventDetail.dvb.missingAddress')}</Text>
       ) : routeResult?.status === 'error' ? (
         <Text className="text-muted-foreground text-sm">{routeResult.message}</Text>
       ) : routeResult?.status === 'ok' ? (
@@ -216,16 +218,22 @@ function DvbRoutePlanner({
             {routeResult.origin.name} {'->'} {routeResult.destination.name}
           </Text>
           {routeResult.trips.length === 0 ? (
-            <Text className="text-muted-foreground text-sm">Keine passende Verbindung gefunden.</Text>
+            <Text className="text-muted-foreground text-sm">{t('eventDetail.dvb.noConnection')}</Text>
           ) : (
             routeResult.trips.map((trip, tripIndex) => (
               <View key={`${trip.departureTime}-${tripIndex}`} className="gap-3 rounded-[12px] bg-secondary px-3 py-3">
                 <View className="flex-row items-center justify-between gap-3">
                   <Text className="text-sm font-semibold">
-                    {formatShortDateTime(trip.departureTime)} - {formatShortDateTime(trip.arrivalTime)}
+                    {formatShortDateTime(trip.departureTime, locale, t('common.unknownTime'))} - {formatShortDateTime(trip.arrivalTime, locale, t('common.unknownTime'))}
                   </Text>
                   <Text className="text-muted-foreground text-xs">
-                    {trip.duration} Min, {trip.interchanges} Umstieg{trip.interchanges === 1 ? '' : 'e'}
+                    {t('eventDetail.dvb.tripSummary', {
+                      duration: trip.duration,
+                      interchanges: trip.interchanges,
+                      interchangesLabel: trip.interchanges === 1
+                        ? t('eventDetail.dvb.changeSingular')
+                        : t('eventDetail.dvb.changePlural'),
+                    })}
                   </Text>
                 </View>
                 <View className="gap-2">
@@ -238,17 +246,17 @@ function DvbRoutePlanner({
                           <Text
                             className="text-center text-xs font-bold text-primary-foreground"
                             style={{ lineHeight: 14 }}>
-                            {leg.line || leg.mode || 'Fuss'}
+                            {leg.line || leg.mode || t('eventDetail.dvb.walking')}
                           </Text>
                         )}
                       </View>
                       <View className="min-w-0 flex-1">
                         <Text className="text-sm font-semibold" numberOfLines={1}>
-                          {leg.direction || leg.arrivalStop || 'Verbindung'}
+                          {leg.direction || leg.arrivalStop || t('common.connection')}
                         </Text>
                         <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-                          {formatShortDateTime(leg.departureTime)} {leg.departureStop ?? ''} {'->'}{' '}
-                          {formatShortDateTime(leg.arrivalTime)} {leg.arrivalStop ?? ''}
+                          {formatShortDateTime(leg.departureTime, locale, t('common.unknownTime'))} {leg.departureStop ?? ''} {'->'}{' '}
+                          {formatShortDateTime(leg.arrivalTime, locale, t('common.unknownTime'))} {leg.arrivalStop ?? ''}
                         </Text>
                       </View>
                     </View>
@@ -260,7 +268,7 @@ function DvbRoutePlanner({
         </View>
       ) : (
         <Text className="text-muted-foreground text-sm">
-          Berechnet eine DVB-Verbindung zur nächsten Haltestelle am Veranstaltungsort.
+          {t('eventDetail.dvb.description')}
         </Text>
       )}
     </View>
@@ -269,6 +277,7 @@ function DvbRoutePlanner({
 
 export default function EventDetailScreen() {
   const theme = useTheme();
+  const { locale, t } = useLanguage();
   const favorites = useFavorites();
   const params = useLocalSearchParams<{ eventId?: string | string[] }>();
   const eventId = getParamValue(params.eventId) as Id<'events'> | undefined;
@@ -294,7 +303,12 @@ export default function EventDetailScreen() {
   const shareEvent = () => {
     if (!event) return;
     void Share.share({
-      message: `${event.title} - ${formatEventDate(event.startsAt)}, ${formatEventTime(event.startsAt)} bei ${club?.name ?? event.locationName ?? 'DDiscover'}`,
+      message: t('eventDetail.shareMessage', {
+        title: event.title,
+        date: formatEventDate(event.startsAt, locale),
+        time: formatEventTime(event.startsAt, locale),
+        location: club?.name ?? event.locationName ?? t('app.name'),
+      }),
       title: event.title,
     });
   };
@@ -344,15 +358,15 @@ export default function EventDetailScreen() {
 
         {detailQuery.isLoading ? (
           <View className="mx-auto w-full max-w-[560px] px-4 py-6">
-            <Text className="text-muted-foreground text-sm">Event wird geladen...</Text>
+            <Text className="text-muted-foreground text-sm">{t('eventDetail.loading')}</Text>
           </View>
         ) : detailQuery.error || !event ? (
           <View className="mx-auto w-full max-w-[560px] gap-3 px-4 py-6">
-            <Text className="text-xl font-semibold">Event nicht gefunden</Text>
+            <Text className="text-xl font-semibold">{t('eventDetail.notFoundTitle')}</Text>
             <Text className="text-muted-foreground text-sm">
               {detailQuery.error
-                ? `Convex konnte nicht geladen werden: ${detailQuery.error.message}`
-                : 'Dieses Event ist nicht mehr verfügbar.'}
+                ? t('errors.convexLoadPrefix', { message: detailQuery.error.message })
+                : t('common.eventUnavailable')}
             </Text>
           </View>
         ) : (
@@ -360,31 +374,31 @@ export default function EventDetailScreen() {
             <View className="gap-3 rounded-[16px] border border-border bg-card px-4 py-4">
               <View className="gap-1">
                 <Text className="text-[28px] font-bold leading-9 text-foreground">{event.title}</Text>
-                <Text className="text-muted-foreground text-sm">{club?.name ?? event.locationName ?? 'Dresden'}</Text>
+                <Text className="text-muted-foreground text-sm">{club?.name ?? event.locationName ?? t('common.dresden')}</Text>
               </View>
 
               <View className="flex-row flex-wrap gap-2">
                 <View className="flex-row items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
                   <Music2 size={14} color={theme.foreground} />
-                  <Text className="text-xs font-semibold">{inferGenre(event.title)}</Text>
+                  <Text className="text-xs font-semibold">{inferGenre(event.title, t)}</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
                   <CalendarClock size={14} color={theme.foreground} />
-                  <Text className="text-xs font-semibold">{formatEventTime(event.startsAt)}</Text>
+                  <Text className="text-xs font-semibold">{formatEventTime(event.startsAt, locale)}</Text>
                 </View>
               </View>
             </View>
 
             <View className="overflow-hidden rounded-[14px] border border-border bg-card">
               <View className="gap-1 border-b border-border px-4 py-4">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase">Datum</Text>
-                <Text className="text-sm font-semibold">{formatEventDate(event.startsAt)}</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('eventDetail.date')}</Text>
+                <Text className="text-sm font-semibold">{formatEventDate(event.startsAt, locale)}</Text>
               </View>
               <View className="gap-1 border-b border-border px-4 py-4">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase">Adresse</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('eventDetail.address')}</Text>
                 <View className="flex-row items-start gap-2">
                   <MapPin size={16} color={theme.mutedForeground} style={{ marginTop: 1 }} />
-                  <Text className="flex-1 text-sm">{address || event.locationName || club?.name || 'Dresden'}</Text>
+                  <Text className="flex-1 text-sm">{address || event.locationName || club?.name || t('common.dresden')}</Text>
                 </View>
               </View>
               {websiteUrl ? (
@@ -393,7 +407,7 @@ export default function EventDetailScreen() {
                   className="flex-row items-center justify-between gap-3 border-b border-border px-4 py-4"
                   onPress={() => void Linking.openURL(websiteUrl)}>
                   <View className="gap-1">
-                    <Text className="text-muted-foreground text-xs font-semibold uppercase">Studentenclub Website</Text>
+                    <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('eventDetail.studentClubWebsite')}</Text>
                     <Text className="text-sm font-semibold">{websiteUrl.replace(/^https?:\/\//, '')}</Text>
                   </View>
                   <Globe2 size={18} color={theme.mutedForeground} />
@@ -405,8 +419,8 @@ export default function EventDetailScreen() {
                   className="flex-row items-center justify-between gap-3 px-4 py-4"
                   onPress={() => void Linking.openURL(event.sourceUrl!)}>
                   <View className="gap-1">
-                    <Text className="text-muted-foreground text-xs font-semibold uppercase">Quelle</Text>
-                    <Text className="text-sm font-semibold">Original Eventseite</Text>
+                    <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('common.source')}</Text>
+                    <Text className="text-sm font-semibold">{t('eventDetail.originalEventPage')}</Text>
                   </View>
                   <ExternalLink size={18} color={theme.mutedForeground} />
                 </Pressable>
@@ -431,7 +445,7 @@ export default function EventDetailScreen() {
                 color={favorited ? theme.primaryForeground : theme.foreground}
                 fill={favorited ? theme.primaryForeground : 'transparent'}
               />
-              <Text>{favorited ? 'Event gespeichert' : 'Event speichern'}</Text>
+              <Text>{favorited ? t('eventDetail.eventSaved') : t('eventDetail.saveEvent')}</Text>
             </Button>
           </View>
         )}

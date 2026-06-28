@@ -8,13 +8,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { previewClubs } from '@/lib/discovery';
+import { useLanguage } from '@/providers/language-provider';
 
 export default function FavoritesScreen() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const favorites = previewClubs.slice(0, 2);
 
   return (
-    <ScreenShell title="Favoriten">
+    <ScreenShell title={t('favorites.title')}>
       <View className="gap-3">
         {favorites.map((club) => (
           <Card key={club.id} className="gap-0 rounded-[22px] py-0">
@@ -38,7 +40,7 @@ export default function FavoritesScreen() {
         ))}
 
         <Button variant="secondary" className="rounded-full">
-          <Text>Weitere Studentenclubs merken</Text>
+          <Text>{t('favorites.startDiscovering')}</Text>
         </Button>
       </View>
     </ScreenShell>

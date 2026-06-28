@@ -6,9 +6,11 @@ import { ActivityIndicator, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { useLanguage } from '@/providers/language-provider';
 
 export function GoogleSignInButton() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const { startSSOFlow } = useSSO();
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -31,10 +33,10 @@ export function GoogleSignInButton() {
       if (sessionId && result.setActive) {
         await result.setActive({ session: sessionId });
       } else {
-        setErrorMessage('Google sign-in did not create a Clerk session.');
+        setErrorMessage(t('auth.googleIncomplete'));
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Google sign-in failed.');
+      setErrorMessage(error instanceof Error ? error.message : t('auth.googleFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +56,7 @@ export function GoogleSignInButton() {
             <Text className="text-[11px] font-semibold">G</Text>
           </View>
         )}
-        <Text>Mit Google fortfahren</Text>
+        <Text>{t('auth.googleContinue')}</Text>
       </Button>
 
       {errorMessage ? <Text className="text-destructive text-xs">{errorMessage}</Text> : null}

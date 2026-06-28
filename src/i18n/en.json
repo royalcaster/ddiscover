@@ -1,0 +1,192 @@
+{
+  "app": {
+    "name": "DDiscover"
+  },
+  "language": {
+    "label": "Language",
+    "german": "German",
+    "english": "English"
+  },
+  "tabs": {
+    "discover": "Discover",
+    "calendar": "Calendar",
+    "profile": "Profile"
+  },
+  "theme": {
+    "label": "Color scheme",
+    "auto": "Auto",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "common": {
+    "dresden": "Dresden",
+    "studentClub": "Student club",
+    "studentClubs": "Student clubs",
+    "event": "Event",
+    "events": "Events",
+    "details": "Details",
+    "source": "Source",
+    "website": "Website",
+    "route": "Route",
+    "favorites": "Favorites",
+    "today": "Today",
+    "unknownTime": "--:--",
+    "connection": "Connection",
+    "eventUnavailable": "This event is no longer available.",
+    "closeDialog": "Close dialog",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "convexLoadPrefix": "Convex could not be loaded: {{message}}",
+    "unknownConvexQuery": "Unknown Convex query error.",
+    "publicConvexUrlMissing": "EXPO_PUBLIC_CONVEX_URL is not configured.",
+    "favoritesTokenMissing": "Clerk did not return a Convex JWT.",
+    "favoritesLoad": "Could not load favorites.",
+    "favoritesSave": "Could not save favorite."
+  },
+  "discover": {
+    "shareClub": "Share student club",
+    "openClubWebsite": "Open club website",
+    "saveClub": "Save student club",
+    "removeClubFavorite": "Remove student club from favorites",
+    "nextEvent": "Next event",
+    "noUpcomingEvents": "No upcoming events for this student club.",
+    "eventSaved": "Event saved",
+    "saveEvent": "Save event",
+    "moreEvents": "More events",
+    "noMoreEvents": "No other imported events.",
+    "seeAllEvents": "See all events ({{count}} more)",
+    "clubsLoading": "Loading student clubs...",
+    "noClubs": "No student clubs available",
+    "currentCategoryNote": "Currently showing student clubs. More place categories will follow.",
+    "shareTitle": "{{clubName}} on DDiscover",
+    "shareNextEvent": "Next event: {{eventTitle}} ({{dateTime}})",
+    "centerUserLocation": "Center map on your location",
+    "showOpenToday": "Show only student clubs open today",
+    "locationPermissionTitle": "Location not allowed",
+    "locationPermissionMessage": "Allow location access to center the map on your position.",
+    "locationUnavailableTitle": "Location unavailable",
+    "locationUnavailableMessage": "Your location could not be loaded right now.",
+    "webMapTitle": "Map view (web fallback)",
+    "webMapDescription": "Interactive markers are available in the native app.",
+    "openToday": "Open today",
+    "userLocationSet": "Own location set"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "eventsLoading": "Loading events...",
+    "noEventsForDay": "No events for this day.",
+    "fallbackClub": "Student club"
+  },
+  "profile": {
+    "title": "Profile",
+    "settingsTitle": "Settings",
+    "openSettings": "Open settings",
+    "backToProfile": "Back to profile",
+    "accountFallback": "Clerk account",
+    "signedInFallback": "Signed in",
+    "signOut": "Sign out",
+    "favoritesLoading": "Loading favorites...",
+    "favoritesEmpty": "Saved student clubs and events will appear here.",
+    "favoriteStudentClubs": "Student clubs",
+    "favoriteEvents": "Events",
+    "profileLoading": "Loading profile...",
+    "signInTitle": "Sign in to DDiscover",
+    "signInDescription": "Save student clubs and events with your Google account.",
+    "clerkMissingTitle": "Clerk is not configured yet",
+    "clerkMissingMessage": "Set `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in `.env.local`."
+  },
+  "auth": {
+    "googleContinue": "Continue with Google",
+    "missingWebClientId": "Missing EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID in .env.local.",
+    "missingAndroidClientId": "Missing EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID in .env.local.",
+    "googleIncomplete": "Google sign-in did not create a Clerk session.",
+    "googleFailed": "Google sign-in failed.",
+    "ssoReturningTitle": "Completing sign-in...",
+    "ssoReturningDescription": "Please wait a moment."
+  },
+  "favoritePrompt": {
+    "title": "Sign-in required",
+    "description": "Sign in with your Google account to save clubs and events to your favorites.",
+    "later": "Later",
+    "signIn": "Go to profile"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "noEvents": "No saved events yet.",
+    "startDiscovering": "Discover clubs and save your favorites."
+  },
+  "route": {
+    "title": "Route",
+    "previewTitle": "Louisenstraße → Pulse",
+    "duration": "23 min",
+    "summary": "On foot • Tram 7 • On foot",
+    "startRoute": "Start route",
+    "walkThreeMinutes": "On foot (3 min)",
+    "walkTwoMinutes": "On foot (2 min)"
+  },
+  "explore": {
+    "title": "Student clubs",
+    "subtitle": "All imported student clubs from the DDiscover dataset.",
+    "loading": "Loading student clubs...",
+    "empty": "No student clubs found.",
+    "website": "Website",
+    "events": "{{count}} events",
+    "nextEvent": "Next event",
+    "heroTitle": "Canonical student club profiles with event context",
+    "heroDescription": "This is the first normalized discovery layer on top of the VDSC import. Each student club card is backed by the canonical Convex model rather than raw feed strings.",
+    "loadedStat": "Student clubs loaded",
+    "withNextEventStat": "With next event",
+    "loadingTitle": "Loading student clubs",
+    "loadingDescription": "Waiting for Convex to return the normalized student club list.",
+    "requestFailed": "Convex request failed",
+    "manual": "MANUAL",
+    "noNextEventShort": "NO NEXT EVENT",
+    "sourceProfile": "Student club profile normalized from source metadata.",
+    "canonicalProfile": "Canonical student club profile with normalized venue metadata.",
+    "noLinkedEvent": "No upcoming event is currently linked to this student club.",
+    "eventDetails": "Event details"
+  },
+  "eventDetail": {
+    "loading": "Loading event...",
+    "notFoundTitle": "Event not found",
+    "fallbackLocation": "Dresden",
+    "fallbackGenre": "Student club event",
+    "date": "Date",
+    "address": "Address",
+    "studentClubWebsite": "Student club website",
+    "originalEventPage": "Original event page",
+    "eventSaved": "Event saved",
+    "saveEvent": "Save event",
+    "shareMessage": "{{title}} - {{date}}, {{time}} at {{location}}",
+    "dvb": {
+      "title": "DVB route",
+      "start": "Start",
+      "startPlaceholder": "Start stop",
+      "destination": "Destination",
+      "destinationFallback": "Event location",
+      "loadRoute": "Calculate route",
+      "loadingRoute": "Loading route...",
+      "missingAddress": "This event is missing address data.",
+      "error": "DVB connection could not be loaded right now.",
+      "description": "Calculates a DVB connection to the nearest stop at the event location.",
+      "noConnection": "No matching connection found.",
+      "tripSummary": "{{duration}} min, {{interchanges}} {{interchangesLabel}}",
+      "changeSingular": "change",
+      "changePlural": "changes",
+      "walking": "Walk"
+    }
+  },
+  "favoritesActions": {
+    "saveFailedTitle": "Save failed",
+    "saveFailedMessage": "The favorite could not be saved right now. Please try again in a moment."
+  },
+  "genres": {
+    "techno": "Techno",
+    "bass": "Drum & Bass",
+    "house": "House",
+    "karaoke": "Karaoke",
+    "quiz": "Quiz",
+    "studentClubEvent": "Student club event"
+  }
+}

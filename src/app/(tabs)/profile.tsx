@@ -1,12 +1,13 @@
 import { useIsFocused } from '@react-navigation/native';
 import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { Image } from 'expo-image';
-import { ArrowLeft, Building2, CalendarClock, Heart, MoonStar, Settings, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, Building2, CalendarClock, Heart, Languages, MoonStar, Settings, ShieldCheck } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { api } from '../../../convex/_generated/api';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { LanguageToggle } from '@/components/language-toggle';
 import { ScreenShell } from '@/components/screen-shell';
 import { ThemeModeToggle } from '@/components/theme-mode-toggle';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { usePublicConvexQuery } from '@/hooks/use-public-convex-query';
 import { useTheme } from '@/hooks/use-theme';
 import { clerkEnabled } from '@/lib/auth';
 import { openEventDetail } from '@/lib/navigation';
+import { useLanguage } from '@/providers/language-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 
 const HEADER_ACTION_COLORS = {
@@ -47,10 +49,11 @@ function formatEventDate(timestamp: number) {
 
 function SignedInCard() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const { signOut } = useClerk();
   const { user } = useUser();
-  const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? 'Clerk Konto';
-  const email = user?.primaryEmailAddress?.emailAddress ?? 'Angemeldet';
+  const displayName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? t('profile.accountFallback');
+  const email = user?.primaryEmailAddress?.emailAddress ?? t('profile.signedInFallback');
   const [imageFailed, setImageFailed] = React.useState(false);
   const imageUrl = user?.imageUrl;
   const showProfileImage = Boolean(imageUrl && !imageFailed);
@@ -78,7 +81,7 @@ function SignedInCard() {
         </View>
 
         <Button variant="outline" className="rounded-full" onPress={() => void signOut()}>
-          <Text>Abmelden</Text>
+          <Text>{t('profile.signOut')}</Text>
         </Button>
       </CardContent>
     </Card>
@@ -117,6 +120,7 @@ const styles = StyleSheet.create({
 
 function FavoritesSection() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const favorites = useFavorites();
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
@@ -144,7 +148,7 @@ function FavoritesSection() {
               color={theme.foreground}
               fill={favoriteCount > 0 ? theme.foreground : 'transparent'}
             />
-            <Text className="text-lg font-semibold">Favorites</Text>
+            <Text className="text-lg font-semibold">{t('common.favorites')}</Text>
           </View>
           <Badge variant="secondary" className="px-2.5 py-1">
             <Text>{favoriteCount}</Text>
@@ -152,26 +156,26 @@ function FavoritesSection() {
         </View>
 
         {isLoading ? (
-          <Text className="text-muted-foreground text-sm">Favoriten werden geladen...</Text>
+          <Text className="text-muted-foreground text-sm">{t('profile.favoritesLoading')}</Text>
         ) : clubsQuery.error || eventsQuery.error ? (
           <Text className="text-destructive text-sm">
-            Convex konnte nicht geladen werden: {clubsQuery.error?.message ?? eventsQuery.error?.message}
+            {t('errors.convexLoadPrefix', { message: clubsQuery.error?.message ?? eventsQuery.error?.message ?? '' })}
           </Text>
         ) : favoriteCount === 0 ? (
           <Text className="text-muted-foreground text-sm">
-            Gespeicherte Studentenclubs und Events erscheinen hier.
+            {t('profile.favoritesEmpty')}
           </Text>
         ) : (
           <View className="gap-3">
             {favoriteClubs.length > 0 ? (
               <View className="gap-2">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase">Studentenclubs</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('profile.favoriteStudentClubs')}</Text>
                 {favoriteClubs.slice(0, 5).map((club) => (
                   <View key={club._id} className="flex-row items-center gap-3 rounded-[12px] bg-secondary px-3 py-3">
                     <Building2 size={16} color={theme.foreground} />
                     <View className="flex-1">
                       <Text className="text-sm font-semibold">{club.name}</Text>
-                      <Text className="text-muted-foreground text-xs">{club.city ?? 'Dresden'}</Text>
+                      <Text className="text-muted-foreground text-xs">{club.city ?? t('common.dresden')}</Text>
                     </View>
                   </View>
                 ))}
@@ -180,7 +184,7 @@ function FavoritesSection() {
 
             {favoriteEvents.length > 0 ? (
               <View className="gap-2">
-                <Text className="text-muted-foreground text-xs font-semibold uppercase">Events</Text>
+                <Text className="text-muted-foreground text-xs font-semibold uppercase">{t('profile.favoriteEvents')}</Text>
                 {favoriteEvents.slice(0, 5).map((event) => (
                   <Pressable
                     key={event._id}
@@ -205,13 +209,14 @@ function FavoritesSection() {
 
 function SignedOutAuthSurface() {
   const isFocused = useIsFocused();
+  const { t } = useLanguage();
   const { height } = useWindowDimensions();
   const authSurfaceMinHeight = Math.max(420, height - 220);
 
   if (!isFocused) {
     return (
       <View style={[styles.authSurface, { minHeight: authSurfaceMinHeight }]}>
-        <Text className="text-muted-foreground text-sm">Profil wird geladen...</Text>
+        <Text className="text-muted-foreground text-sm">{t('profile.profileLoading')}</Text>
       </View>
     );
   }
@@ -220,9 +225,9 @@ function SignedOutAuthSurface() {
     <View style={[styles.authSurface, { minHeight: authSurfaceMinHeight }]}>
       <View className="gap-4" style={styles.authContent}>
         <View className="gap-2">
-          <Text className="text-center text-2xl font-semibold">Bei DDiscover anmelden</Text>
+          <Text className="text-center text-2xl font-semibold">{t('profile.signInTitle')}</Text>
           <Text className="text-muted-foreground text-center text-sm">
-            Speichere Studentenclubs und Events mit deinem Google Konto.
+            {t('profile.signInDescription')}
           </Text>
         </View>
         <GoogleSignInButton />
@@ -233,14 +238,25 @@ function SignedOutAuthSurface() {
 
 function SettingsContent() {
   const theme = useTheme();
+  const { t } = useLanguage();
 
   return (
     <View className="gap-3">
       <Card className="rounded-[22px] py-0">
         <CardContent className="gap-4 px-4 py-4">
           <View className="flex-row items-center gap-2">
+            <Languages size={18} color={theme.foreground} />
+            <Text className="text-base font-semibold">{t('language.label')}</Text>
+          </View>
+          <LanguageToggle />
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-[22px] py-0">
+        <CardContent className="gap-4 px-4 py-4">
+          <View className="flex-row items-center gap-2">
             <MoonStar size={18} color={theme.foreground} />
-            <Text className="text-base font-semibold">Farbschema</Text>
+            <Text className="text-base font-semibold">{t('theme.label')}</Text>
           </View>
           <ThemeModeToggle />
         </CardContent>
@@ -251,17 +267,18 @@ function SettingsContent() {
 
 export default function ProfileScreen() {
   const { resolvedTheme } = useAppTheme();
+  const { t } = useLanguage();
   const headerActionColors = HEADER_ACTION_COLORS[resolvedTheme];
   const { isSignedIn } = useAuth();
   const [showSettings, setShowSettings] = React.useState(false);
 
   return (
     <ScreenShell
-      title={showSettings ? 'Einstellungen' : 'Profil'}
+      title={showSettings ? t('profile.settingsTitle') : t('profile.title')}
       headerRight={
         <Pressable
           key={resolvedTheme}
-          accessibilityLabel={showSettings ? 'Zurück zum Profil' : 'Einstellungen öffnen'}
+          accessibilityLabel={showSettings ? t('profile.backToProfile') : t('profile.openSettings')}
           accessibilityRole="button"
           android_ripple={{ color: headerActionColors.ripple, borderless: true }}
           onPress={() => setShowSettings((value) => !value)}
@@ -287,9 +304,9 @@ export default function ProfileScreen() {
           {!clerkEnabled ? (
             <Card className="rounded-[22px] py-0">
               <CardContent className="gap-3 px-4 py-4">
-                <Text className="text-base font-semibold">Clerk noch nicht konfiguriert</Text>
+                <Text className="text-base font-semibold">{t('profile.clerkMissingTitle')}</Text>
                 <Text className="text-muted-foreground text-sm">
-                  Setze `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in `.env.local`.
+                  {t('profile.clerkMissingMessage')}
                 </Text>
               </CardContent>
             </Card>
