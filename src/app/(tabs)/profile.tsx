@@ -37,8 +37,8 @@ const HEADER_ACTION_COLORS = {
   },
 } as const;
 
-function formatEventDate(timestamp: number) {
-  return new Intl.DateTimeFormat('de-DE', {
+function formatEventDate(timestamp: number, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -120,8 +120,10 @@ const styles = StyleSheet.create({
 
 function FavoritesSection() {
   const theme = useTheme();
-  const { t } = useLanguage();
+  const { locale, t } = useLanguage();
+  const isFocused = useIsFocused();
   const favorites = useFavorites();
+  const refreshFavorites = favorites.refresh;
   const clubsQuery = usePublicConvexQuery(api.clubs.list, { limit: 72 });
   const eventsQuery = usePublicConvexQuery(api.events.listUpcoming, { limit: 120 });
   const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
@@ -137,6 +139,12 @@ function FavoritesSection() {
   );
   const favoriteCount = favoriteClubs.length + favoriteEvents.length;
   const isLoading = favorites.isLoading || clubsQuery.isLoading || eventsQuery.isLoading;
+
+  React.useEffect(() => {
+    if (isFocused) {
+      void refreshFavorites();
+    }
+  }, [isFocused, refreshFavorites]);
 
   return (
     <Card className="rounded-[22px] py-0">
@@ -194,7 +202,7 @@ function FavoritesSection() {
                     <CalendarClock size={16} color={theme.foreground} />
                     <View className="flex-1">
                       <Text className="text-sm font-semibold">{event.title}</Text>
-                      <Text className="text-muted-foreground text-xs">{formatEventDate(event.startsAt)}</Text>
+                      <Text className="text-muted-foreground text-xs">{formatEventDate(event.startsAt, locale)}</Text>
                     </View>
                   </Pressable>
                 ))}

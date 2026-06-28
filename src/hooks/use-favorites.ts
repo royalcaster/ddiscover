@@ -27,10 +27,38 @@ type FavoriteIds = {
   eventIds: Set<Id<'events'>>;
 };
 
+type FavoriteIdsListener = (favoriteIds: FavoriteIds) => void;
+
 function createEmptyFavoriteIds(): FavoriteIds {
   return {
     clubIds: new Set<Id<'clubs'>>(),
     eventIds: new Set<Id<'events'>>(),
+  };
+}
+
+function cloneFavoriteIds(favoriteIds: FavoriteIds): FavoriteIds {
+  return {
+    clubIds: new Set(favoriteIds.clubIds),
+    eventIds: new Set(favoriteIds.eventIds),
+  };
+}
+
+let sharedFavoriteIds = createEmptyFavoriteIds();
+const favoriteIdsListeners = new Set<FavoriteIdsListener>();
+
+function setSharedFavoriteIds(nextFavoriteIds: FavoriteIds) {
+  sharedFavoriteIds = cloneFavoriteIds(nextFavoriteIds);
+  favoriteIdsListeners.forEach((listener) => listener(cloneFavoriteIds(sharedFavoriteIds)));
+}
+
+function updateSharedFavoriteIds(updater: (current: FavoriteIds) => FavoriteIds) {
+  setSharedFavoriteIds(updater(sharedFavoriteIds));
+}
+
+function subscribeToFavoriteIds(listener: FavoriteIdsListener) {
+  favoriteIdsListeners.add(listener);
+  return () => {
+    favoriteIdsListeners.delete(listener);
   };
 }
 
@@ -52,7 +80,7 @@ export function useFavorites() {
   const { language, t } = useLanguage();
   const { showSignInPrompt } = useFavoriteSignInPrompt();
   const getTokenRef = React.useRef(getToken);
-  const [favoriteIds, setFavoriteIds] = React.useState<FavoriteIds>(() => createEmptyFavoriteIds());
+  const [favoriteIds, setFavoriteIds] = React.useState<FavoriteIds>(() => cloneFavoriteIds(sharedFavoriteIds));
   const [isLoading, setIsLoading] = React.useState(false);
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [authError, setAuthError] = React.useState<Error | null>(null);
@@ -61,6 +89,8 @@ export function useFavorites() {
   React.useEffect(() => {
     getTokenRef.current = getToken;
   }, [getToken]);
+
+  React.useEffect(() => subscribeToFavoriteIds(setFavoriteIds), []);
 
   const getConvexToken = React.useCallback(
     async (skipCache = false) => {
@@ -78,7 +108,7 @@ export function useFavorites() {
     requestIdRef.current = requestId;
 
     if (!isLoaded) {
-      setFavoriteIds(createEmptyFavoriteIds());
+      setSharedFavoriteIds(createEmptyFavoriteIds());
       setHasLoaded(false);
       setAuthError(null);
       setIsLoading(false);
@@ -86,7 +116,7 @@ export function useFavorites() {
     }
 
     if (!isSignedIn) {
-      setFavoriteIds(createEmptyFavoriteIds());
+      setSharedFavoriteIds(createEmptyFavoriteIds());
       setHasLoaded(false);
       setAuthError(null);
       setIsLoading(false);
@@ -103,7 +133,7 @@ export function useFavorites() {
 
       if (requestId !== requestIdRef.current) return;
 
-      setFavoriteIds({
+      setSharedFavoriteIds({
         clubIds: new Set(favorites.clubIds),
         eventIds: new Set(favorites.eventIds),
       });
@@ -111,7 +141,7 @@ export function useFavorites() {
     } catch (error) {
       if (requestId !== requestIdRef.current) return;
       console.warn('[Favorites] Could not load favorites', error);
-      setFavoriteIds(createEmptyFavoriteIds());
+      setSharedFavoriteIds(createEmptyFavoriteIds());
       setHasLoaded(true);
       setAuthError(error instanceof Error ? error : new Error(t('errors.favoritesLoad')));
     } finally {
@@ -145,7 +175,8 @@ export function useFavorites() {
       const result = await client.mutation(api.favorites.toggleFavorite, args);
 
       setAuthError(null);
-      setFavoriteIds((current) => {
+      setHasLoaded(true);
+      updateSharedFavoriteIds((current) => {
         const clubIds = new Set(current.clubIds);
         const eventIds = new Set(current.eventIds);
 
