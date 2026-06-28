@@ -1,6 +1,6 @@
 import { Heart, Music2 } from 'lucide-react-native';
 import React from 'react';
-import { Image as NativeImage, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, Image as NativeImage, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '../../../convex/_generated/api';
@@ -11,8 +11,30 @@ import { useTheme } from '@/hooks/use-theme';
 import { openEventDetail } from '@/lib/navigation';
 
 const EVENT_THUMBNAIL = require('../../../assets/images/logo-glow.png');
+const HORIZONTAL_GESTURE_THRESHOLD = 14;
+const SWIPE_DISTANCE_THRESHOLD = 44;
+const SWIPE_VELOCITY_THRESHOLD = 0.35;
+
+type DayLayout = {
+  x: number;
+  width: number;
+};
 
 const styles = StyleSheet.create({
+  dayButton: {
+    minHeight: 54,
+    minWidth: 42,
+    zIndex: 1,
+  },
+  dayHighlight: {
+    bottom: 0,
+    position: 'absolute',
+    top: 0,
+  },
+  daySelector: {
+    minHeight: 54,
+    position: 'relative',
+  },
   eventThumbnail: {
     height: '100%',
     width: '100%',
@@ -20,7 +42,11 @@ const styles = StyleSheet.create({
 });
 
 function toDayKey(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function startOfToday() {
@@ -70,6 +96,11 @@ export default function CalendarScreen() {
   const clubs = React.useMemo(() => clubsQuery.data ?? [], [clubsQuery.data]);
   const favorites = useFavorites();
   const [activeDay, setActiveDay] = React.useState<string | null>(null);
+  const [dayLayouts, setDayLayouts] = React.useState<Partial<Record<string, DayLayout>>>({});
+  const dayHighlightLeft = React.useRef(new Animated.Value(0)).current;
+  const dayHighlightOpacity = React.useRef(new Animated.Value(0)).current;
+  const dayHighlightWidth = React.useRef(new Animated.Value(0)).current;
+  const hasPositionedDayHighlight = React.useRef(false);
 
   const days = React.useMemo(() => {
     const today = startOfToday();
@@ -89,37 +120,145 @@ export default function CalendarScreen() {
     }
   }, [activeDay, days]);
 
+  const activeDayLayout = activeDay ? dayLayouts[activeDay] : null;
+
+  React.useEffect(() => {
+    if (!activeDayLayout) {
+      return;
+    }
+
+    const duration = hasPositionedDayHighlight.current ? 220 : 0;
+
+    Animated.parallel([
+      Animated.timing(dayHighlightLeft, {
+        toValue: activeDayLayout.x,
+        duration,
+        useNativeDriver: false,
+      }),
+      Animated.timing(dayHighlightWidth, {
+        toValue: activeDayLayout.width,
+        duration,
+        useNativeDriver: false,
+      }),
+      Animated.timing(dayHighlightOpacity, {
+        toValue: 1,
+        duration,
+        useNativeDriver: false,
+      }),
+    ]).start();
+
+    hasPositionedDayHighlight.current = true;
+  }, [activeDayLayout, dayHighlightLeft, dayHighlightOpacity, dayHighlightWidth]);
+
   const filteredEvents = React.useMemo(() => {
     if (!activeDay) return events;
     return events.filter((event) => toDayKey(event.startsAt) === activeDay);
   }, [activeDay, events]);
 
+  const selectDayByOffset = React.useCallback(
+    (offset: number) => {
+      const currentIndex = activeDay ? days.findIndex((day) => day.key === activeDay) : 0;
+      const boundedCurrentIndex = currentIndex >= 0 ? currentIndex : 0;
+      const nextIndex = Math.max(0, Math.min(days.length - 1, boundedCurrentIndex + offset));
+      const nextDay = days[nextIndex];
+
+      if (nextDay && nextDay.key !== activeDay) {
+        setActiveDay(nextDay.key);
+      }
+    },
+    [activeDay, days],
+  );
+
+  const daySwipeResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          const horizontalMovement = Math.abs(gestureState.dx);
+          const verticalMovement = Math.abs(gestureState.dy);
+
+          return (
+            horizontalMovement > HORIZONTAL_GESTURE_THRESHOLD &&
+            horizontalMovement > verticalMovement * 1.25
+          );
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const shouldSwipe =
+            Math.abs(gestureState.dx) > SWIPE_DISTANCE_THRESHOLD ||
+            Math.abs(gestureState.vx) > SWIPE_VELOCITY_THRESHOLD;
+
+          if (!shouldSwipe) {
+            return;
+          }
+
+          selectDayByOffset(gestureState.dx < 0 ? 1 : -1);
+        },
+      }),
+    [selectDayByOffset],
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
+        {...daySwipeResponder.panHandlers}
         className="flex-1"
         contentContainerClassName="mx-auto w-full max-w-[560px] gap-4 px-4 pb-28 pt-2">
         <Text className="pt-2 text-[28px] font-bold leading-9 text-foreground">Kalender</Text>
 
-        <View className="flex-row justify-between gap-1">
+        <View className="flex-row justify-between gap-1" style={styles.daySelector}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.dayHighlight,
+              {
+                backgroundColor: theme.primary,
+                borderRadius: 12,
+                left: dayHighlightLeft,
+                opacity: dayHighlightOpacity,
+                width: dayHighlightWidth,
+              },
+            ]}
+          />
           {days.map((day) => {
             const selected = activeDay === day.key;
             return (
               <Pressable
                 key={day.key}
                 android_ripple={{ color: theme.secondary }}
-                className={
-                  selected
-                    ? 'min-h-[54px] min-w-[42px] items-center justify-center rounded-[12px] bg-primary px-2'
-                    : 'min-h-[54px] min-w-[42px] items-center justify-center rounded-[12px] px-2'
-                }
+                className="items-center justify-center rounded-[12px] px-2"
+                onLayout={(event) => {
+                  const { x, width } = event.nativeEvent.layout;
+                  setDayLayouts((previousLayouts) => {
+                    const currentLayout = previousLayouts[day.key];
+
+                    if (currentLayout?.x === x && currentLayout.width === width) {
+                      return previousLayouts;
+                    }
+
+                    return {
+                      ...previousLayouts,
+                      [day.key]: { x, width },
+                    };
+                  });
+                }}
                 onPress={() => setActiveDay(day.key)}>
-                <Text className={selected ? 'text-[11px] font-semibold text-primary-foreground' : 'text-[11px] font-semibold text-foreground'}>
-                  {day.isToday ? 'Heute' : formatWeekday(day.timestamp)}
-                </Text>
-                <Text className={selected ? 'text-[13px] font-bold text-primary-foreground' : 'text-[13px] font-bold text-foreground'}>
-                  {formatDayNumber(day.timestamp)}
-                </Text>
+                <View style={styles.dayButton} className="items-center justify-center">
+                  <Text
+                    className={
+                      selected
+                        ? 'text-[11px] font-semibold text-primary-foreground'
+                        : 'text-[11px] font-semibold text-foreground'
+                    }>
+                    {day.isToday ? 'Heute' : formatWeekday(day.timestamp)}
+                  </Text>
+                  <Text
+                    className={
+                      selected
+                        ? 'text-[13px] font-bold text-primary-foreground'
+                        : 'text-[13px] font-bold text-foreground'
+                    }>
+                    {formatDayNumber(day.timestamp)}
+                  </Text>
+                </View>
               </Pressable>
             );
           })}
