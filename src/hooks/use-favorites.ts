@@ -25,10 +25,12 @@ type FavoriteIds = {
   eventIds: Set<Id<'events'>>;
 };
 
-const emptyFavoriteIds: FavoriteIds = {
-  clubIds: new Set<Id<'clubs'>>(),
-  eventIds: new Set<Id<'events'>>(),
-};
+function createEmptyFavoriteIds(): FavoriteIds {
+  return {
+    clubIds: new Set<Id<'clubs'>>(),
+    eventIds: new Set<Id<'events'>>(),
+  };
+}
 
 function createAuthenticatedConvexClient(token: string) {
   if (!publicConvexUrl) {
@@ -46,28 +48,43 @@ function createAuthenticatedConvexClient(token: string) {
 export function useFavorites() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const { showSignInPrompt } = useFavoriteSignInPrompt();
-  const [favoriteIds, setFavoriteIds] = React.useState<FavoriteIds>(emptyFavoriteIds);
+  const getTokenRef = React.useRef(getToken);
+  const [favoriteIds, setFavoriteIds] = React.useState<FavoriteIds>(() => createEmptyFavoriteIds());
   const [isLoading, setIsLoading] = React.useState(false);
+  const [hasLoaded, setHasLoaded] = React.useState(false);
   const [authError, setAuthError] = React.useState<Error | null>(null);
   const requestIdRef = React.useRef(0);
 
+  React.useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
   const getConvexToken = React.useCallback(
     async (skipCache = false) => {
-      const token = await getToken({ template: 'convex', skipCache });
+      const token = await getTokenRef.current({ template: 'convex', skipCache });
       if (!token) {
         throw new Error('Clerk did not return a Convex JWT.');
       }
       return token;
     },
-    [getToken],
+    [],
   );
 
   const refresh = React.useCallback(async () => {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
-    if (!isLoaded || !isSignedIn) {
-      setFavoriteIds(emptyFavoriteIds);
+    if (!isLoaded) {
+      setFavoriteIds(createEmptyFavoriteIds());
+      setHasLoaded(false);
+      setAuthError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isSignedIn) {
+      setFavoriteIds(createEmptyFavoriteIds());
+      setHasLoaded(false);
       setAuthError(null);
       setIsLoading(false);
       return;
@@ -87,10 +104,12 @@ export function useFavorites() {
         clubIds: new Set(favorites.clubIds),
         eventIds: new Set(favorites.eventIds),
       });
+      setHasLoaded(true);
     } catch (error) {
       if (requestId !== requestIdRef.current) return;
       console.warn('[Favorites] Could not load favorites', error);
-      setFavoriteIds(emptyFavoriteIds);
+      setFavoriteIds(createEmptyFavoriteIds());
+      setHasLoaded(true);
       setAuthError(error instanceof Error ? error : new Error('Could not load favorites.'));
     } finally {
       if (requestId !== requestIdRef.current) return;
@@ -157,7 +176,7 @@ export function useFavorites() {
   return {
     isSignedIn: Boolean(isSignedIn),
     isConvexAuthenticated: Boolean(isSignedIn && !authError),
-    isLoading,
+    isLoading: !isLoaded || (Boolean(isSignedIn) && (!hasLoaded || isLoading)),
     clubIds: favoriteIds.clubIds,
     eventIds: favoriteIds.eventIds,
     isClubFavorited,
