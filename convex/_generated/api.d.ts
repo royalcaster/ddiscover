@@ -15,6 +15,7 @@ import type * as dvb from "../dvb.js";
 import type * as events from "../events.js";
 import type * as favorites from "../favorites.js";
 import type * as geocoding from "../geocoding.js";
+import type * as ingestion from "../ingestion.js";
 import type * as scraping_clubCatalog from "../scraping/clubCatalog.js";
 import type * as scraping_eventImages from "../scraping/eventImages.js";
 import type * as scraping_geocoding from "../scraping/geocoding.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   favorites: typeof favorites;
   geocoding: typeof geocoding;
+  ingestion: typeof ingestion;
   "scraping/clubCatalog": typeof scraping_clubCatalog;
   "scraping/eventImages": typeof scraping_eventImages;
   "scraping/geocoding": typeof scraping_geocoding;

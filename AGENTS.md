@@ -49,6 +49,7 @@ These instructions apply to every AI agent, automation, and human collaborator w
 - Use the format `<type>(optional-scope): <description>`.
 - Prefer standard types such as `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, `chore`, and `revert`.
 - Keep each commit focused on one coherent change set.
+- Remote policy from June 30, 2026 onward: use GitHub `origin` for pushes. Do not push to the HTW GitLab remote unless the user explicitly overrides this instruction in the current conversation.
 
 <!-- convex-ai-start -->
 This project uses [Convex](https://convex.dev) as its backend.

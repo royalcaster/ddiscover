@@ -1,0 +1,133 @@
+{
+  "name": "DDiscover - Google Places Venue Bootstrap",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bc5fc67f-14c9-4d12-a6a8-8d53e7b8d6ea",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const configured = process.env.DDISCOVER_GOOGLE_PLACES_QUERIES_JSON;\nconst fallbackQueries = [\n  'night club in Dresden Germany',\n  'bar with live music in Dresden Germany',\n  'event venue nightlife Dresden Germany'\n];\n\nlet queries = fallbackQueries;\nif (configured && configured.trim()) {\n  try {\n    queries = JSON.parse(configured);\n  } catch (error) {\n    throw new Error(`DDISCOVER_GOOGLE_PLACES_QUERIES_JSON is not valid JSON: ${error.message}`);\n  }\n}\n\nif (!Array.isArray(queries) || queries.length === 0) {\n  throw new Error('No Google Places queries configured.');\n}\n\nreturn queries.map((textQuery) => ({ json: { textQuery } }));"
+      },
+      "id": "8d2e19a2-12f9-489b-9016-8c53a5500cf4",
+      "name": "Build Search Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (const item of $input.all()) {\n  if (!process.env.GOOGLE_PLACES_API_KEY) {\n    throw new Error('GOOGLE_PLACES_API_KEY is required.');\n  }\n\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://places.googleapis.com/v1/places:searchText',\n    headers: {\n      'content-type': 'application/json',\n      'x-goog-api-key': process.env.GOOGLE_PLACES_API_KEY,\n      'x-goog-fieldmask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.businessStatus,places.websiteUri,places.regularOpeningHours'\n    },\n    body: {\n      textQuery: item.json.textQuery,\n      languageCode: 'de',\n      regionCode: 'DE',\n      includedType: 'bar',\n      locationBias: {\n        circle: {\n          center: { latitude: 51.0504, longitude: 13.7373 },\n          radius: 12000\n        }\n      }\n    },\n    json: true,\n    timeout: 30000\n  });\n\n  output.push({\n    json: {\n      textQuery: item.json.textQuery,\n      places: response.places || []\n    }\n  });\n}\nreturn output;"
+      },
+      "id": "d4733952-13cc-47fd-9fe1-31d959929ccf",
+      "name": "Search Google Places",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function slugPart(value) {\n  return String(value || '')\n    .normalize('NFKD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-|-$/g, '');\n}\n\nconst seen = new Set();\nconst venues = [];\nfor (const item of $input.all()) {\n  for (const place of item.json.places || []) {\n    if (!place.id || seen.has(place.id)) continue;\n    seen.add(place.id);\n    const name = place.displayName?.text;\n    if (!name) continue;\n    venues.push({\n      sourceKey: `google-place-${slugPart(place.id)}`,\n      name,\n      city: 'Dresden',\n      category: 'nightlife',\n      googlePlace: {\n        placeId: place.id,\n        name,\n        formattedAddress: place.formattedAddress,\n        websiteUri: place.websiteUri,\n        businessStatus: place.businessStatus,\n        types: place.types || [],\n        latitude: place.location?.latitude,\n        longitude: place.location?.longitude,\n        regularOpeningHoursText: (place.regularOpeningHours?.weekdayDescriptions || []).join('\\n') || undefined\n      },\n      evidenceSnippets: [`Google Places Text Search result for query: ${item.json.textQuery}`],\n      warnings: [],\n      confidence: 0.82\n    });\n  }\n}\n\nreturn [\n  {\n    json: {\n      source: {\n        sourceKey: 'google-places-dresden-nightlife-bootstrap',\n        name: 'Google Places Dresden nightlife bootstrap',\n        sourceType: 'google_places',\n        fetchedAt: Date.now()\n      },\n      venues,\n      events: []\n    }\n  }\n];"
+      },
+      "id": "5e099ac9-874b-4c2d-a9c0-6f47764c5b33",
+      "name": "Normalize Venue Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\nfor (const item of $input.all()) {\n  if (!process.env.DDISCOVER_CONVEX_SITE_URL) {\n    throw new Error('DDISCOVER_CONVEX_SITE_URL is required, for example https://your-deployment.convex.site');\n  }\n  if (!process.env.DDISCOVER_INGESTION_TOKEN) {\n    throw new Error('DDISCOVER_INGESTION_TOKEN is required.');\n  }\n\n  const result = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${process.env.DDISCOVER_CONVEX_SITE_URL.replace(/\\/+$/, '')}/ingestion/candidates`,\n    headers: {\n      authorization: `Bearer ${process.env.DDISCOVER_INGESTION_TOKEN}`,\n      'content-type': 'application/json'\n    },\n    body: item.json,\n    json: true,\n    timeout: 30000\n  });\n\n  output.push({\n    json: {\n      source: item.json.source,\n      venueCount: item.json.venues.length,\n      result\n    }\n  });\n}\nreturn output;"
+      },
+      "id": "e6ea40a7-7f58-452e-a88c-0289c7af9624",
+      "name": "Send Candidates To Convex",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Search Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Search Queries": {
+      "main": [
+        [
+          {
+            "node": "Search Google Places",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google Places": {
+      "main": [
+        [
+          {
+            "node": "Normalize Venue Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Venue Candidates": {
+      "main": [
+        [
+          {
+            "node": "Send Candidates To Convex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "versionId": "1",
+  "meta": {
+    "ddiscover": {
+      "kind": "google-places-bootstrap"
+    }
+  },
+  "tags": [
+    {
+      "name": "ddiscover"
+    },
+    {
+      "name": "ingestion"
+    }
+  ]
+}

@@ -22,6 +22,7 @@ function RootLayoutContent() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="event/[eventId]" />
+        <Stack.Screen name="admin/ingestion" />
       </Stack>
       <PortalHost />
     </ThemeProvider>

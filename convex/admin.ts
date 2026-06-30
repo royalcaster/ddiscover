@@ -4,7 +4,14 @@ import { internalMutation, type MutationCtx } from './_generated/server';
 
 async function deleteAllFromTable(
   ctx: MutationCtx,
-  table: 'events' | 'clubs' | 'geocodingCache' | 'favorites',
+  table:
+    | 'events'
+    | 'clubs'
+    | 'geocodingCache'
+    | 'favorites'
+    | 'ingestionSources'
+    | 'venueCandidates'
+    | 'eventCandidates',
 ) {
   let deleted = 0;
 
@@ -31,6 +38,9 @@ export const wipeAllData = internalMutation({
     const deletedClubs = args.includeClubs === true ? await deleteAllFromTable(ctx, 'clubs') : 0;
     const deletedGeocodingCache = await deleteAllFromTable(ctx, 'geocodingCache');
     const deletedFavorites = await deleteAllFromTable(ctx, 'favorites');
+    const deletedIngestionSources = await deleteAllFromTable(ctx, 'ingestionSources');
+    const deletedVenueCandidates = await deleteAllFromTable(ctx, 'venueCandidates');
+    const deletedEventCandidates = await deleteAllFromTable(ctx, 'eventCandidates');
 
     return {
       deletedEvents,
@@ -38,6 +48,9 @@ export const wipeAllData = internalMutation({
       skippedClubs: args.includeClubs !== true,
       deletedGeocodingCache,
       deletedFavorites,
+      deletedIngestionSources,
+      deletedVenueCandidates,
+      deletedEventCandidates,
     };
   },
 });
